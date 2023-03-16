@@ -10,6 +10,7 @@ args = parser.parse_args()
 
 faceCascadeName = args.faceCascade
 eyesCascadeName = args.eyesCascade
+cameraDevice = args.camera
 faceCascade = cv.CascadeClassifier()
 eyesCascade = cv.CascadeClassifier()
 
@@ -24,14 +25,13 @@ if not eyesCascade.load(cv.samples.findFile(eyesCascadeName)):
 def detectAndDisplayFace(frame):
   frameGray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
   frameGray = cv.equalizeHist(frameGray)
-  #-- Detect faces
+  # Detect faces
   faces = faceCascade.detectMultiScale(frameGray)
   print("Found {0} faces!".format(len(faces)))
   for (x,y,w,h) in faces:
-    center = (x + w//2, y + h//2)
     frame = cv.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
     faceROI = frameGray[y:y+h,x:x+w]
-    #-- In each face, detect eyes
+    # In each face, detect eyes... not really  needed, but it's cool
     eyes = eyesCascade.detectMultiScale(faceROI)
     for (x2,y2,w2,h2) in eyes:
       eyeCenter = (x + x2 + w2//2, y + y2 + h2//2)
@@ -48,9 +48,8 @@ def detectAndDisplayFace(frame):
 # detectAndDisplayFace(frame=img)
 # cv.waitKey(0)
 
-camera_device = args.camera
 #-- 2. Read the video stream
-cap = cv.VideoCapture(camera_device)
+cap = cv.VideoCapture(cameraDevice)
 if not cap.isOpened:
   print('--(!)Error opening video capture')
   exit(0)

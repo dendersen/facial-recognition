@@ -1,7 +1,31 @@
 import cv2 as cv
 import argparse
 
+# tjek efter om alle imports skal bruges
+import tensorflow as tf
+import keras
+import keras_vggface
+from keras_vggface.vggface import VGGFace
+import numpy as np
+from keras.utils.data_utils import get_file
+import keras_vggface.utils
+import PIL
+import os
+import os.path
+
 from SRC.image.imageCapture import Cam
+
+class tensorflowModels:
+  def __init__(self) -> None:
+    # self.vggface = VGGFace(model='vgg16')
+    # self.vggfaceResnet = VGGFace(model='resnet50')
+    # self.vggfaceSenet = VGGFace(model='senet50')
+    
+    # # Print downloaded weights, input, and output
+    # print(self.vggface.summary())
+    # print('Inputs are: ', self.vggface.inputs)
+    # print('Outputs are: ', self.vggface.outputs)
+    pass
 
 class AI:
   def __init__(self):
@@ -25,8 +49,7 @@ class AI:
     if not self.eyesCascade.load(cv.samples.findFile(self.eyesCascadeName)):
       print('--(!)Error loading eyes cascade')
       exit(0)
-    self.detectAndDisplayFace()
-
+  
   def detectAndDisplayFace(self):
     frame = self.camera.readCam()
     frameGray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -34,13 +57,13 @@ class AI:
     # Detect faces
     faces = self.faceCascade.detectMultiScale(frameGray)
     print("Found {0} faces!".format(len(faces)))
-    for (x,y,w,h) in faces:
-      frame = cv.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-      faceROI = frameGray[y:y+h,x:x+w]
+    for (faceX,faceY,faceWidth,faceHeight) in faces:
+      frame = cv.rectangle(frame, (faceX, faceY), (faceX+faceWidth, faceY+faceHeight), (0, 255, 0), 2)
+      faceROI = frameGray[faceY:faceY+faceHeight,faceX:faceX+faceWidth]
       # In each face, detect eyes... not really  needed, but it's cool
       eyes = self.eyesCascade.detectMultiScale(faceROI)
       for (x2,y2,w2,h2) in eyes:
-        eyeCenter = (x + x2 + w2//2, y + y2 + h2//2)
+        eyeCenter = (faceX + x2 + w2//2, faceY + y2 + h2//2)
         radius = int(round((w2 + h2)*0.25))
         frame = cv.circle(frame, eyeCenter, radius, (255, 0, 0 ), 4)
     cv.imshow('Capture - Face detection', frame)

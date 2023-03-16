@@ -1,4 +1,4 @@
-from Code.AI.useAI import *
+from SRC.AI.useAI import AI
 
-a:AI= AI()
-a.
+a:AI = AI()
+a.detectAndDisplayFace()

@@ -19,4 +19,3 @@ while True:
 #   a.detectAndDisplayFace()
 #   if cv.waitKey(10) == 27:
 #     break
-

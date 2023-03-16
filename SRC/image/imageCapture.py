@@ -10,7 +10,7 @@ import cv2 as cv
 # cv.waitKey(0)
 class Cam:
   def __init__(self,cameraDevice) -> None:
-    self.cameraDevice = cameraDevice
+    self.cameraDevice = cv.VideoCapture(cameraDevice)
     pass
   def readCam(self):
     #-- 2. Read the video stream

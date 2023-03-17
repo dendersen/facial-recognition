@@ -26,8 +26,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       for ID in range(0,maxVolume):
         try:
             img = Image.open(path+str(ID)+extension)
-            outgoingImages.append(img.load())
-            img.close()
+            outgoingImages.append(img)
             outgoingLabels.append(label)
         except:
           break
@@ -38,8 +37,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
         for ID in range(maxVolume):
           try:
             img = Image.open(path+str(ID)+extension)
-            outgoingImages.append(img.load())
-            img.close()
+            outgoingImages.append(img)
             outgoingLabels.append(label)
           except:
             break
@@ -53,8 +51,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       try:
         while (True):
           img = Image.open(path+str(ID)+extension)
-          tempOutgoingImages.append(img.load())
-          img.close()
+          tempOutgoingImages.append(img)
           tempOutgoingLabels.append(label)
           ID += 1
       except:
@@ -63,6 +60,13 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       for i in range(0,min(maxVolume,len(tempOutgoingImages))):
         outgoingImages.append(tempOutgoingImages[i])
         outgoingLabels.append(tempOutgoingLabels[i])
+      i = min(maxVolume,len(tempOutgoingImages))
+      while(True):
+        try:
+          outgoingImages[i].close()
+          i += 1
+        except:
+          break
 
   if((not linearLoad) and alowModified):
     for label in labels:
@@ -73,8 +77,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       try:
         while (True):
           img = Image.open(path+str(ID)+extension)
-          tempOutgoingImages.append(img.load())
-          img.close()
+          tempOutgoingImages.append(img)
           tempOutgoingLabels.append(label)
           ID += 1
       except:
@@ -83,6 +86,13 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       for i in range(0,min(maxVolume,len(tempOutgoingImages))):
         outgoingImages.append(tempOutgoingImages[i])
         outgoingLabels.append(tempOutgoingLabels[i])
+      i = min(maxVolume,len(tempOutgoingImages))
+      while(True):
+        try:
+          outgoingImages[i].close()
+          i += 1
+        except:
+          break
 
   if(not linearLoad):
     return [*shuffle(zip(outgoingImages,outgoingLabels))]

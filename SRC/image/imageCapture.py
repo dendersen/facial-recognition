@@ -1,6 +1,7 @@
 import cv2 as cv
-import mtcnn
+from facenet_pytorch.models.mtcnn import MTCNN
 import numpy as np
+import torch
 class Cam:
   def __init__(self,cameraDevice:int) -> None:
     self.cameraDevice = cv.VideoCapture(cameraDevice)
@@ -18,23 +19,51 @@ class Cam:
     cv.imshow('Cam output: ', frame)
     return frame
   
-  def processFace(self, frame):
+  def processFace(self, frame) -> np.ndarray[1,np.ndarray[2,np.ndarray[3,int]]]:
+    height, width, channel = frame.shape
+    
+    # smallFrame = frame[yLeft:yRight, xLeft:xRight]
+    
     # Makes the face detector
-    self.faceDetector = mtcnn.MTCNN()
-    faceInformation = self.faceDetector.detect_faces(frame)
-    if faceInformation != []:
-      boundingBox = faceInformation[0]['box']
-      x, y, width, height = boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3]
-      cv.rectangle(frame, 
-                    (x, y),
-                    (x+width,y+height),
-                    (0,155,255),
-                    2)
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    mtcnn = MTCNN(min_face_size=80, select_largest=True, device=device)
+    # prdict face
+    face, probs = mtcnn.detect(frame)
+    
+    print(type(face))
+    
+    if type(face) != np.ndarray:
+      print("there is no face!")
+    else:
+      xLeft = int(min(face[0][0], face[0][2]))
+      xRight = int(max(face[0][0], face[0][2]))
+      yBottom = int(min(face[0][1], face[0][3]))
+      yTop = int(max(face[0][1], face[0][3]))
       
-      face = frame[y:y+height, x:x+width]
-      cv.imshow('This is the face', face)
-      return face
-    
-    # x, y, width, height = faceInformation[0]['box']
-    
-    #display resulting frame
+      # not needed
+      # cv.rectangle(frame, (xLeft, yLeft), (xRight, yRight), 
+      #                       (255, 0, 0), 2)
+      
+      faceWidth = xRight-xLeft
+      faceHeight = yTop-yBottom
+      
+      total = max(faceWidth,faceHeight)
+      
+      xdif = (total - faceWidth)/2
+      ydif = (total - faceHeight)/2
+      
+      xLeft = int((xLeft-xdif)-(total/4))
+      xRight = int((xRight+xdif)+(total/4))
+      yBottom = int((yBottom-ydif)-(total/4))
+      yTop = int((yTop+ydif)+(total/4))
+      
+      print("Old Width: " + str(total) )
+      print("New Width: " + str(xRight-xLeft))
+      
+      if xLeft < 0 or xRight > width or yBottom < 0 or yTop > height:
+        print('ERROR! Face not in frame, please move to center')
+      else:
+        buff2 = frame[yBottom:yTop, xLeft:xRight]
+        print("We found that there is: " + str(probs) + " % that it is a face")
+        cv.imshow('This is the face', buff2)
+        return buff2

@@ -25,8 +25,10 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       path:str = "images/original/" + label  + "/"
       for ID in range(0,maxVolume):
         try:
-          outgoingImages.append(Image.open(path+str(ID)+extension))
-          outgoingLabels.append(label)
+            img = Image.open(path+str(ID)+extension)
+            outgoingImages.append(img.load())
+            img.close()
+            outgoingLabels.append(label)
         except:
           break
 

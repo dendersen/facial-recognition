@@ -8,7 +8,7 @@ import cv2 as cv
 Camera = Cam(0)
 
 while True:
-  pic = Camera.readCam()  
+  pic = Camera.readCam()
   if cv.waitKey(10) == 32:
     BGRface = Camera.processFace(pic)
     if type(BGRface) == np.ndarray:

@@ -20,7 +20,7 @@ class Cam:
     cv.imshow('Cam output: ', frame)
     return frame
   
-  def processFace(self, frame) -> np.ndarray[1,np.ndarray[2,np.ndarray[3,int]]]:
+  def processFace(self, frame) -> list[list[list[int]]]:
     # get fram shape
     height, width, channel = frame.shape
     

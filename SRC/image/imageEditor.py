@@ -14,7 +14,7 @@
 import numpy as np
 import random
 
-def makeVarients(image: np.ndarray[np.ndarray[np.ndarray[int]]], variantNumber:int) -> np.ndarray[np.ndarray[np.ndarray[np.ndarray[int]]]]:
+def makeVarients(image: list[list[list[int]]], variantNumber:int) -> list[list[list[list[int]]]]: 
     # Height and width is always the same. It's defined as size
     size  = image.shape[0]
     

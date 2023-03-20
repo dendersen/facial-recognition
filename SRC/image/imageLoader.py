@@ -1,6 +1,8 @@
 from PIL import Image
 from random import shuffle
-
+from numpy import array
+from SRC.image.imageEditor import makeVarients
+from SRC.image.imageSaver import saveImage
 extension:str = ".jpg"
 
 def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple[Image.Image,str]]:
@@ -56,14 +58,13 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           ID += 1
       except:
         pass
-
       for i in range(0,min(maxVolume,len(tempOutgoingImages))):
         outgoingImages.append(tempOutgoingImages[i])
         outgoingLabels.append(tempOutgoingLabels[i])
       i = min(maxVolume,len(tempOutgoingImages))
       while(True):
         try:
-          outgoingImages[i].close()
+          tempOutgoingImages[i].close()
           i += 1
         except:
           break
@@ -82,19 +83,27 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           ID += 1
       except:
         pass
-
       for i in range(0,min(maxVolume,len(tempOutgoingImages))):
         outgoingImages.append(tempOutgoingImages[i])
         outgoingLabels.append(tempOutgoingLabels[i])
       i = min(maxVolume,len(tempOutgoingImages))
       while(True):
         try:
-          outgoingImages[i].close()
+          tempOutgoingImages[i].close()
           i += 1
         except:
           break
-
   if(not linearLoad):
     return [*shuffle(zip(outgoingImages,outgoingLabels))]
-
+  
   return [*zip(outgoingImages,outgoingLabels)]
+
+def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple[list[list[list[int]]],str]]:
+  image = loadImages(maxVolume, linearLoad, labels, alowModified)
+  return [(array(img[0]),img[1]) for img in image]
+
+def modifyOriginals(maximum:int = 300,varients:int = 10):
+  ID = 0
+  for image in loadImgAsArr(300,True):
+    saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True,)
+    ID += varients

@@ -32,4 +32,3 @@ IL.modifyOriginals()
 #           IS.saveImage([variant],"Christoffer",True)
 #   if cv.waitKey(10) == 27:
 #     break
-

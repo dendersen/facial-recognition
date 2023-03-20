@@ -93,7 +93,6 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           i += 1
         except:
           break
-        
   if(not linearLoad):
     return [*shuffle(zip(outgoingImages,outgoingLabels))]
   

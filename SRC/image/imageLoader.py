@@ -1,5 +1,6 @@
 from PIL import Image
 from random import shuffle
+from numpy import array
 
 def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple(Image.Image,str)]:
   """loads any number of images based on a max volume (per label) and a list of labels in use
@@ -70,13 +71,17 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           ID += 1
       except:
         pass
-
+      
       for i in tempOutgoingImages:
         outgoingImages.append(i)
       for i in tempOutgoingLabels:
         outgoingLabels.append(i)
-
+  
   if(not linearLoad):
     return [*shuffle(zip(outgoingImages,outgoingLabels))]
-
+  
   return [*zip(outgoingImages,outgoingLabels)]
+
+def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple(list[list[list[int]]],str)]:
+  image = loadImages(maxVolume, linearLoad, labels, alowModified)
+  return [(array(img[0]),img[1]) for img in image]

@@ -2,7 +2,9 @@ from PIL import Image
 from random import shuffle
 from numpy import array
 
-def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple(Image.Image,str)]:
+extension:str = ".jpg"
+
+def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple[Image.Image,str]]:
   """loads any number of images based on a max volume (per label) and a list of labels in use
   
   Args:
@@ -22,10 +24,11 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
   if (linearLoad):
     for label in labels:
       path:str = "images/original/" + label  + "/"
-      for ID in range(maxVolume):
+      for ID in range(0,maxVolume):
         try:
-          outgoingImages.append(Image.load(path + str(ID)))
-          outgoingLabels.append(label)
+            img = Image.open(path+str(ID)+extension)
+            outgoingImages.append(img)
+            outgoingLabels.append(label)
         except:
           break
 
@@ -34,7 +37,8 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
         path:str = "images/modified/" + label  + "/"
         for ID in range(maxVolume):
           try:
-            outgoingImages.append(Image.load(path + str(ID)))
+            img = Image.open(path+str(ID)+extension)
+            outgoingImages.append(img)
             outgoingLabels.append(label)
           except:
             break
@@ -47,16 +51,22 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       tempOutgoingLabels = []
       try:
         while (True):
-          tempOutgoingImages.append(Image.load(path + str(ID)))
+          img = Image.open(path+str(ID)+extension)
+          tempOutgoingImages.append(img)
           tempOutgoingLabels.append(label)
           ID += 1
       except:
         pass
-
-      for i in tempOutgoingImages:
-        outgoingImages.append(i)
-      for i in tempOutgoingLabels:
-        outgoingLabels.append(i)
+      for i in range(0,min(maxVolume,len(tempOutgoingImages))):
+        outgoingImages.append(tempOutgoingImages[i])
+        outgoingLabels.append(tempOutgoingLabels[i])
+      i = min(maxVolume,len(tempOutgoingImages))
+      while(True):
+        try:
+          tempOutgoingImages[i].close()
+          i += 1
+        except:
+          break
 
   if((not linearLoad) and alowModified):
     for label in labels:
@@ -66,17 +76,23 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       tempOutgoingLabels = []
       try:
         while (True):
-          tempOutgoingImages.append(Image.load(path + str(ID)))
+          img = Image.open(path+str(ID)+extension)
+          tempOutgoingImages.append(img)
           tempOutgoingLabels.append(label)
           ID += 1
       except:
         pass
-      
-      for i in tempOutgoingImages:
-        outgoingImages.append(i)
-      for i in tempOutgoingLabels:
-        outgoingLabels.append(i)
-  
+      for i in range(0,min(maxVolume,len(tempOutgoingImages))):
+        outgoingImages.append(tempOutgoingImages[i])
+        outgoingLabels.append(tempOutgoingLabels[i])
+      i = min(maxVolume,len(tempOutgoingImages))
+      while(True):
+        try:
+          tempOutgoingImages[i].close()
+          i += 1
+        except:
+          break
+        
   if(not linearLoad):
     return [*shuffle(zip(outgoingImages,outgoingLabels))]
   

@@ -2,6 +2,7 @@ import cv2 as cv
 from facenet_pytorch.models.mtcnn import MTCNN
 import numpy as np
 import torch
+
 class Cam:
   def __init__(self,cameraDevice:int) -> None:
     self.cameraDevice = cv.VideoCapture(cameraDevice)
@@ -20,17 +21,14 @@ class Cam:
     return frame
   
   def processFace(self, frame) -> list[list[list[int]]]:
+    # get fram shape
     height, width, channel = frame.shape
-    
-    # smallFrame = frame[yLeft:yRight, xLeft:xRight]
     
     # Makes the face detector
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    mtcnn = MTCNN(min_face_size=80, select_largest=True, device=device)
+    mtcnn = MTCNN(min_face_size=120, select_largest=True, device=device)
     # prdict face
     face, probs = mtcnn.detect(frame)
-    
-    print(type(face))
     
     if type(face) != np.ndarray:
       print("there is no face!")
@@ -57,13 +55,10 @@ class Cam:
       yBottom = int((yBottom-ydif)-(total/4))
       yTop = int((yTop+ydif)+(total/4))
       
-      print("Old Width: " + str(total) )
-      print("New Width: " + str(xRight-xLeft))
-      
       if xLeft < 0 or xRight > width or yBottom < 0 or yTop > height:
         print('ERROR! Face not in frame, please move to center')
       else:
         buff2 = frame[yBottom:yTop, xLeft:xRight]
-        print("We found that there is: " + str(probs) + " % that it is a face")
+        print("We found that there is: " + str(probs[0]) + "% that it is a face")
         cv.imshow('This is the face', buff2)
         return buff2

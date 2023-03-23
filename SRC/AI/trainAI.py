@@ -5,20 +5,34 @@ from keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
 import os
 import glob
 import cv2
+from matplotlib import pyplot as plt
+
+# Important paths to data
+posPath = os.path.join('images\DataSiameseNetwork','positive')
+negPath = os.path.join('images\DataSiameseNetwork','negative')
+ancPath = os.path.join('images\DataSiameseNetwork','anchor')
 
 def rewriteDataToMatchNetwork(person):
-  posPath = os.path.join('images\DataSiameseNetwork','positive')
-  posfiles = glob.glob(posPath)
-  for f in posfiles:
-    os.remove(f)
-  negPath = os.path.join('images\DataSiameseNetwork','negative')
-  negfiles = glob.glob(negPath)
-  for f in negfiles:
-    os.remove(f)
-  ancPath = os.path.join('images\DataSiameseNetwork','anchor')
-  ancfiles = glob.glob(ancPath)
-  for f in ancfiles:
-    os.remove(f)
+  for file_name in os.listdir(posPath):
+    # construct full file path
+    file = os.path.join(posPath, file_name)
+    if ".jpg" in file:
+      print('Deleting file:', file)
+      os.remove(file)
+  
+  for file_name in os.listdir(negPath):
+    # construct full file path
+    file = os.path.join(negPath, file_name)
+    if ".jpg" in file:
+      print('Deleting file:', file)
+      os.remove(file)
+  
+  for file_name in os.listdir(ancPath):
+    # construct full file path
+    file = os.path.join(ancPath, file_name)
+    if ".jpg" in file:
+      print('Deleting file:', file)
+      os.remove(file)
   
   
   # Get all negative data
@@ -29,30 +43,62 @@ def rewriteDataToMatchNetwork(person):
       newPath = os.path.join(negPath, picture)
       cv2.imwrite(newPath, img)
   
-  # Get all anchor data
-  datapath = os.path.join('images/original/', person)
+  # Get all anchor data and positive data
+  datapath = os.path.join('images/modified/', person)
+  datapath2 = os.path.join('images/modified/', person)
+  i = 0
   for picture in os.listdir(datapath):
     if ".jpg" in picture:
-      path = os.path.join(datapath, picture)
-      img = cv2.imread(path)
-      newPath = os.path.join(ancPath, picture)
-      cv2.imwrite(newPath, img)
+      if i % 2 == 0:
+        path = os.path.join(datapath, picture)
+        img = cv2.imread(path)
+        newPath = os.path.join(ancPath, picture)
+        cv2.imwrite(newPath, img)
+        i = i+1
+      else:
+        path = os.path.join(datapath2, picture)
+        img = cv2.imread(path)
+        newPath = os.path.join(posPath, picture)
+        cv2.imwrite(newPath, img)
+        i = i+1
+
+def preprocess(filePath):
   
-  # Get all positive data
-  datapath2 = os.path.join('images/modified/', person)
-  for picture in os.listdir(datapath2):
-    if ".jpg" in picture:
-      path = os.path.join(datapath2, picture)
-      img = cv2.imread(path)
-      newPath = os.path.join(posPath, picture)
-      cv2.imwrite(newPath, img)
+  # Read in image from file path
+  byteImg = tf.io.read_file(filePath)
+  # Load in image
+  img = tf.io.decode_jpeg(byteImg)
+  
+  # preprocessing steps:
+  #                   - Resize image to be 100x100x3 pixels, just to make sure
+  #                   - Scale the image to be between 0 and 1
+  img = tf.image.resize(img, (100,100))
+  img = img/255.0
+  return img
+
+def preprocessTwin(inputImg, validationImg, label):
+  return(preprocess(inputImg), preprocess(validationImg), label)
+
 
 def buildData():
+  # load data
+  anchor = tf.data.Dataset.list_files(ancPath+'\*.jpg').take(160)
+  positive = tf.data.Dataset.list_files(posPath+'\*.jpg').take(160)
+  negative = tf.data.Dataset.list_files(negPath+'\*.jpg').take(160)
   
-  pass
+  # build a dataset of our data
+  positives = tf.data.Dataset.zip((anchor,positive, tf.data.Dataset.from_tensor_slices(tf.ones(len(anchor)))))
+  negatives = tf.data.Dataset.zip((anchor,negative, tf.data.Dataset.from_tensor_slices(tf.zeros(len(anchor)))))
+  data = positives.concatenate(negatives)
+  
+  # Build dataloader pipline
+  data = data.map(preprocessTwin)
+  data = data.cache()
+  data = data.shuffle(buffer_size=1024)
+  
+  return data
 
 def makeImbedding():
-    
     inp = Input(shape=(100,100,3), name='inputImage')
     
     # First block
@@ -127,17 +173,20 @@ class AI:
     checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
     checkpoint = tf.train.Checkpoint(opt=opt, siameseModel=siameseModel)
     
-    # Build the training step
-  
-  # # Load the data
-  # trainData = keras.utils.image_dataset_from_directory('images\modified',
-  #                                                         shuffle=True,
-  #                                                         image_size=(100,100))
-  
+    # Build the training step - This is where i left off from
   pass
 
 
-rewriteDataToMatchNetwork("Niels")
+rewriteDataToMatchNetwork("Christoffer")
+
+data = buildData()
+samples = data.as_numpy_iterator()
+print(len(samples.next()))
+fig, ax = plt.subplots(2)
+ax[0].imshow(samples.next()[0])
+ax[1].imshow(samples.next()[1])
+plt.show()
+print(samples.next()[2])
 
 # siameseNetwork = AI.makeSiameseModel()
 # siameseNetwork.summary()

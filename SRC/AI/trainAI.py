@@ -8,13 +8,16 @@ import cv2
 
 def rewriteDataToMatchNetwork(person):
   posPath = os.path.join('images\DataSiameseNetwork','positive')
-  for f in files:
+  posfiles = glob.glob(posPath)
+  for f in posfiles:
     os.remove(f)
   negPath = os.path.join('images\DataSiameseNetwork','negative')
-  for f in files:
+  negfiles = glob.glob(negPath)
+  for f in negfiles:
     os.remove(f)
   ancPath = os.path.join('images\DataSiameseNetwork','anchor')
-  for f in files:
+  ancfiles = glob.glob(ancPath)
+  for f in ancfiles:
     os.remove(f)
   
   

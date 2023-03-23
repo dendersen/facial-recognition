@@ -94,7 +94,9 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
         except:
           break
   if(not linearLoad):
-    return [*shuffle(zip(outgoingImages,outgoingLabels))]
+    out = [*zip(outgoingImages,outgoingLabels)]
+    shuffle(out)
+    return out
   
   return [*zip(outgoingImages,outgoingLabels)]
 
@@ -103,7 +105,18 @@ def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer
   return [(array(img[0]),img[1]) for img in image]
 
 def modifyOriginals(maximum:int = 300,varients:int = 10):
-  ID = 0
+  IDChris = 0
+  IDDavid = 0
+  IDNiels = 0
   for image in loadImgAsArr(300,True):
+    ID = 0
+    if(image[1] == "Christoffer"):
+      ID = IDChris
+      IDChris += varients
+    elif(image[1] == "David"):
+      ID = IDDavid
+      IDDavid += varients
+    else:
+      ID = IDNiels
+      IDNiels += varients
     saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True,)
-    ID += varients

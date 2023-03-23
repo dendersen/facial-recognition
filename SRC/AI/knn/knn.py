@@ -2,6 +2,8 @@ from typing import Union
 from itertools import count
 from SRC.AI.knn.point import Point
 from SRC.AI.knn.distanceStorage import Distance as dist
+from SRC.AI.knn.distanceStorage import checkDist, getFirst
+import time as Time
 
 class Knn:
   def __init__(self,knownDataType:list[Point],k:int = 5,distID:int = 0) -> None:
@@ -27,21 +29,25 @@ class Knn:
     return item0.distance(self.distanceCalcID,item1)#calls the distance method contained in the class point
   
   def runData(self) -> None:#runs the algorithm through all unkown points
-    for toBeTested in self.data: #datapoint being checked
-      distances:list[dist.Distance] = self.calculateDistances(toBeTested)
+    time = 0
+    for i,toBeTested in enumerate(self.data): #datapoint being checked
+      time = Time.mktime(Time.localtime())
+      print(str(i) + "/" + str(len(self.data)) + "\r",end="")
+      distances:list[dist] = self.calculateDistances(toBeTested)
       
       #sorts after best
-      distances.sort(key=dist.checkDist)
+      distances.sort(key=checkDist)
       
       #finds label
       labels = [distance.point.label for l,distance in zip(range(0,self.k),distances)]#farverne af de nærmeste punkter
       existingLabels = self.findIndividualLabels(labels)
       labelCounts = [[labels.count(j),j] for j in existingLabels]#antal af hver farve
-      labelCounts.sort(key=dist.getFirst)
+      labelCounts.sort(key=getFirst)
       
       #saves best label
       toBeTested.label = labelCounts[0][1]
       self.referencePoints.append(toBeTested)
+      print("timeSpent:", Time.mktime(Time.localtime())-time)
     return
   
   def findIndividualLabels(self, labels:list[str]) -> list[str]:
@@ -55,13 +61,12 @@ class Knn:
       if not exists:
         foundLabels.append(i)
     return foundLabels
-
-  def calculateDistance(self, test:Point) -> list[dist.Distance]:
-    distances:list[dist.Distance] = []
+  def calculateDistances(self, test:Point) -> list[dist]:
+    distances:list[dist] = []
     
     for j in self.referencePoints:
       if j != test:
-        distances.append(dist.Distance(j,self.distance(test,j)))#calculate the distance
+        distances.append(dist(j,self.distance(test,j)))#calculate the distance
     return distances
 
   def errorRate(self)->int:#counts the number of True in error array
@@ -69,7 +74,7 @@ class Knn:
     for i,j in zip(self.referencePoints[::-1],self.solution[::-1]):
       if i.label != j:
         e+=1
-    print ((len(self.solution) - e) / len(self.solution),"p")
+    print ((len(self.solution) - e) / len(self.solution),"percent correct")
     return e
   
   def testK(self,rangeOfK: range = -1) -> list[Point]:#test's for different k's on the current ori(original know points) and currently active dataset 

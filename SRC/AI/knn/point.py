@@ -9,10 +9,14 @@ class Point:
     self.label = label
     self.dist = [self.euclid,self.manhattan,self.chebyshev,self.hammingManhattan,self.hammingEuclid,self.hammingChebyshev]
   
+  def removeLabel(self) -> Point:
+    label = "lime"
+    return self
+  
   def distance(self,version:int,point:Point):
     return self.dist[version](point)
   def euclid(self,point:Point)->float:
-    return sqrt(sum([(i-l)**2 for i,l in (self.location,point.location)]))
+    return sqrt(sum([(i-l)**2 for i,l in zip(self.location,point.location)]))
   def manhattan(self,point:Point)->float:
     return abs((sum([(i-l) for i,l in (self.location,point.location)])))
   def chebyshev(self,point:Point)->float:

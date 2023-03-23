@@ -2,8 +2,7 @@ from typing import Union
 from PIL import Image
 
 extension:str = ".jpg"
-
-def saveImage(img:Union[list[Image.Image], list[list[list[list[int]]]],Image.Image], label:str, modified:bool ,ID:int = 0) -> None:
+def saveImage(img:Union[list[Image.Image], list[list[list[list[int]]]],Image.Image], label:str, modified:bool ,ID:int = 0,forceID:bool = False) -> None:
   """saves an image to the correct location based on it's label
   
   Args:
@@ -25,10 +24,11 @@ def saveImage(img:Union[list[Image.Image], list[list[list[list[int]]]],Image.Ima
   else:
     path = "images/original/" + label  + "/"
   
-  ID = findOpenID(ID,path)
-  for i in img:
-    i = imageScale(i, modified)
-    i.save(path + str(ID) + extension)
+  if not forceID:
+    ID = findOpenID(ID,path)
+  for image in img:
+    image = imageScale(image,modified)
+    image.save(path + str(ID) + ".jpg")
     ID += 1
   
   return

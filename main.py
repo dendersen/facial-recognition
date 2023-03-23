@@ -4,6 +4,9 @@ import SRC.image.imageLoader as IL
 import SRC.image.imageSaver as IS
 import cv2 as cv
 
+IL.modifyOriginals()
+
+
 # make an instance of camera
 Camera = Cam(0)
 
@@ -18,7 +21,7 @@ while True:
         IS.saveImage([RGBface],"Other",False)
         
         # make variant
-        BGRnewVariants = makeVarients(BGRface, variantNumber=10)
+        BGRnewVariants = makeVarients(BGRface)
         
         # save all variants
         for variant in BGRnewVariants:
@@ -29,4 +32,3 @@ while True:
           IS.saveImage([variant],"Other",True)
   if cv.waitKey(10) == 27:
     break
-

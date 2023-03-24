@@ -96,7 +96,11 @@ def buildData():
   data = data.cache()
   data = data.shuffle(buffer_size=1024)
   
-  return data
+  # Training partition
+  trainData = data.take(round(len(data)*.7))
+  trainData = trainData.batch(16)
+  trainData = trainData.prefetch(8)
+  return trainData
 
 def makeImbedding():
     inp = Input(shape=(100,100,3), name='inputImage')
@@ -177,12 +181,13 @@ class AI:
   pass
 
 
-rewriteDataToMatchNetwork("Christoffer")
+rewriteDataToMatchNetwork("Niels")
 
-data = buildData()
-samples = data.as_numpy_iterator()
+trainData = buildData()
+trainSamples = trainData.as_numpy_iterator()
+
 for i in range(5):
-  thisExample = samples.next()
+  thisExample = trainSamples.next()
   print(len(thisExample))
   fig, ax = plt.subplots(2)
   ax[0].imshow(thisExample[0])

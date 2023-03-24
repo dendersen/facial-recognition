@@ -108,7 +108,9 @@ def modifyOriginals(maximum:int = 300,varients:int = 10):
   IDChris = 0
   IDDavid = 0
   IDNiels = 0
-  for image in loadImgAsArr(300,True):
+
+  IDOther = 0
+  for image in loadImgAsArr(maximum,True):
     ID = 0
     if(image[1] == "Christoffer"):
       ID = IDChris

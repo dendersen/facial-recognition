@@ -1,11 +1,18 @@
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
+from tensorflow.keras.metrics import Precision, Recall
 import tensorflow as tf
-import keras
-from keras.models import Model
-from keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
 import os
 import glob
 import cv2
 from matplotlib import pyplot as plt
+import numpy as np
+
+# Avoid out of out of memmory errors by setting GPU Memory Consumption Growth
+# Avoid OOM errors by setting GPU Memory Consumption Growth
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus: 
+  tf.config.experimental.set_memory_growth(gpu, True)
 
 # Important paths to data
 posPath = os.path.join('images\DataSiameseNetwork','positive')
@@ -79,7 +86,6 @@ def preprocess(filePath):
 def preprocessTwin(inputImg, validationImg, label):
   return(preprocess(inputImg), preprocess(validationImg), label)
 
-
 def buildData():
   # load data
   anchor = tf.data.Dataset.list_files(ancPath+'\*.jpg').take(160)
@@ -100,7 +106,13 @@ def buildData():
   trainData = data.take(round(len(data)*.7))
   trainData = trainData.batch(16)
   trainData = trainData.prefetch(8)
-  return trainData
+  
+  # Testing partition
+  testData = data.skip(round(len(data)*.7))
+  testData = testData.take(round(len(data)*.3))
+  testData = testData.batch(16)
+  testData = testData.prefetch(8)
+  return (trainData, testData)
 
 def makeImbedding():
     inp = Input(shape=(100,100,3), name='inputImage')
@@ -124,19 +136,6 @@ def makeImbedding():
     
     
     return Model(inputs=[inp], outputs=[d1], name='embedding')
-
-@tf.function # Compiles into a tensorflow graph
-def trainStep(batch):
-  
-  with tf.GradientTape() as tape: # Allows for capture of gradients from network
-    
-    # Get anchor and the positive/negative image
-    X = batch[:2]
-    # Get label
-    y = batch[2]
-  
-  pass
-
 class L1Dist(Layer):
   
   def __init__(self, **kwargs):
@@ -147,8 +146,12 @@ class L1Dist(Layer):
     return tf.math.abs(inputEmbedding - validationEmbedding)
 
 class AI:
+  def __init__ (self, trainData,testData):
+    self.trainData = trainData
+    self.testData = testData
   
-  def makeSiameseModel():
+  
+  def makeSiameseModel(self):
     
     embedding = makeImbedding()
     
@@ -165,36 +168,105 @@ class AI:
     classifier = Dense(1, activation='sigmoid')(distances)
     
     return Model(inputs=[inputImage, validationImage], outputs=classifier, name='SiameseNetwork')
-
-  def trainAI(siameseModel):
+  
+  @tf.function # Compiles into a tensorflow graph
+  def trainStep(self, batch):
+    
+    # Record all of our operations
+    with tf.GradientTape() as tape: # Allows for capture of gradients from network
+      
+      # Get anchor and the positive/negative image
+      X = batch[:2]
+      # Get label
+      y = batch[2]
+      
+      # Forward pass
+      yhat = self.siameseModel(X, training=True)
+      # Calculate loss
+      loss = self.binaryCrossLoss(y, yhat)
+    # print("Model loss is at: ", loss)
+    
+    # Calculate gradients
+    grad = tape.gradient(loss, self.siameseModel.trainable_variables)
+    
+    # Calculate updated weights and apply to siamese model
+    self.opt.apply_gradients(zip(grad, self.siameseModel.trainable_variables))
+  
+  def train(self, data, EPOCHS):
+    # loop through epochs
+    for epoch in range(1,EPOCHS+1):
+      print('\n Epoch {}/{}'.format(epoch,EPOCHS))
+      progbar = tf.keras.utils.Progbar(len(data))
+      
+      # loop through each batch
+      for idx, batch in enumerate(data):
+        # Run train steps
+        self.trainStep(batch)
+        progbar.update(idx+1)
+      
+      # Save checkpoints
+      if epoch % 2 == 0:
+        self.checkpoint.save(file_prefix=self.checkpointPrefix)
+  
+  def trainAI(self, siameseModel):
+    self.siameseModel = siameseModel
     # Define loss funktion
-    binaryCrossLoss = tf.losses.BinaryCrossentropy(from_logits=True)
+    self.binaryCrossLoss = tf.losses.BinaryCrossentropy(from_logits=True)
     # Define optimizer
-    opt = tf.keras.optimizers.Adam(1e-4) # 0.0001 learningrate
+    self.opt = tf.keras.optimizers.Adam(1e-4) # 0.0001 learningrate
     
     # Establish checkpoints for training
     checkpointDir = './trainingCheckpoints'
-    checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
-    checkpoint = tf.train.Checkpoint(opt=opt, siameseModel=siameseModel)
+    self.checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
+    self.checkpoint = tf.train.Checkpoint(opt=self.opt, siameseModel=siameseModel)
     
-    # Build the training step - This is where i left off from
-  pass
+    # Train the network
+    EPOCHS = 4
+    self.train(trainData,EPOCHS=EPOCHS)
+    self.siameseModel.save('siamesemodel.h5')
+    return siameseModel
 
 
 rewriteDataToMatchNetwork("Niels")
 
-trainData = buildData()
-trainSamples = trainData.as_numpy_iterator()
+# Get data from files
+(trainData, testData) = buildData()
 
-for i in range(5):
-  thisExample = trainSamples.next()
-  print(len(thisExample))
-  fig, ax = plt.subplots(2)
-  ax[0].imshow(thisExample[0])
-  ax[1].imshow(thisExample[1])
-  plt.show()
-  print(thisExample[2])
+# Build an instance of the class AI
+neuralNetwork = AI(trainData=trainData,testData=testData)
+print(neuralNetwork.testData)
 
-# siameseNetwork = AI.makeSiameseModel()
-# siameseNetwork.summary()
+# Build network
+siameseNetwork = neuralNetwork.makeSiameseModel()
+siameseNetwork.summary()
+
+# Train network
+neuralNetwork.trainAI(siameseModel=siameseNetwork)
+
+# # Reload model 
+# siameseModel = tf.keras.models.load_model('siamesemodelv2.h5', 
+#                                    custom_objects={'L1Dist':L1Dist, 'BinaryCrossentropy':tf.losses.BinaryCrossentropy})
+
+# # View model summary
+# siameseModel.summary()
+
+
+# # Get a batch of test data
+# testInput, testVal, yTrue = testData.as_numpy_iterator().next()
+
+# # Make predictions
+# yHat = siameseNetwork.predict([testInput, testVal])
+
+# # Post processing the results
+# results = [1 if prediction > 0.5 else 0 for prediction in yHat]
+# print(results)
+# print(yTrue)
+
+# # Create a metric object
+# m = Recall()
+# # Calculating the recall value
+# m.update_state(yTrue, yHat)
+
+# # Return recall result
+# print("The network got: ",m.result().numpy()*100, "% correkt")
 

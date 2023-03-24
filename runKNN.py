@@ -48,7 +48,7 @@ def getPic():
 def getYN(msg:str) -> bool:
   return input(msg + " Y/N: ").capitalize() == "Y"
 
-def runKNN(useOriginals:bool == None, useModified:bool = None, makeModified = False, ):
+def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = False, ):
   ori = useOriginals
   if(ori == None):
     ori = getYN("should original images be used")
@@ -76,3 +76,5 @@ def runKNN(useOriginals:bool == None, useModified:bool = None, makeModified = Fa
   k = Knn(all.copy(),distID=1)
   k.UpdateDataset([makePoint((getPic(),"UnKnown"))],[getValidLabel("who is this a picture of? ")])
   print(k.testK(range(5,int(len(all)/6),2)))
+
+runKNN()

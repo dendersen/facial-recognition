@@ -13,6 +13,7 @@
 
 import numpy as np
 import random
+import uuid
 
 def makeVarients(image: list[list[list[int]]], variantNumber:int = 10) -> list[list[list[list[int]]]]: 
     # Height and width is always the same. It's defined as size

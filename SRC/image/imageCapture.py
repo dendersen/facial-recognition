@@ -20,6 +20,9 @@ class Cam:
     cv.imshow('Cam output: ', frame)
     return frame
   
+  def close(self):
+    self.cameraDevice.release()
+  
   def processFace(self, frame) -> list[list[list[int]]]:
     # get fram shape
     height, width, channel = frame.shape

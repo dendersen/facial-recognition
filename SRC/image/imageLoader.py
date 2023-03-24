@@ -5,7 +5,7 @@ from SRC.image.imageEditor import makeVarients
 from SRC.image.imageSaver import saveImage
 extension:str = ".jpg"
 
-def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple[Image.Image,str]]:
+def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False)-> list[tuple[Image.Image,str]]:
   """loads any number of images based on a max volume (per label) and a list of labels in use
   
   Args:
@@ -100,7 +100,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
   
   return [*zip(outgoingImages,outgoingLabels)]
 
-def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple[list[list[list[int]]],str]]:
+def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False)-> list[tuple[list[list[list[int]]],str]]:
   image = loadImages(maxVolume, linearLoad, labels, alowModified)
   return [(array(img[0]),img[1]) for img in image]
 
@@ -108,7 +108,9 @@ def modifyOriginals(maximum:int = 300,varients:int = 10):
   IDChris = 0
   IDDavid = 0
   IDNiels = 0
-  for image in loadImgAsArr(300,True):
+
+  IDOther = 0
+  for image in loadImgAsArr(maximum,True):
     ID = 0
     if(image[1] == "Christoffer"):
       ID = IDChris
@@ -116,7 +118,10 @@ def modifyOriginals(maximum:int = 300,varients:int = 10):
     elif(image[1] == "David"):
       ID = IDDavid
       IDDavid += varients
-    else:
+    elif(image[1] == "Niels"):
       ID = IDNiels
       IDNiels += varients
+    else:
+      ID = IDOther
+      IDOther += varients
     saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True,)

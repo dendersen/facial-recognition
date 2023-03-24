@@ -20,10 +20,6 @@ class Knn:
     self.data = data #data pieces containing a list of points
     self.solution:list[str] = solution#solution to data piece of index x #true means type 1, false means type 2
     self.error = [False]*(len(self.solution))
-    #self.solution[0] is the answer to self.data [0]
-    self.calcK:list[Point] = []#constains error numbers for different solutions
-    self.calcD:list[Point] = []#constains error numbers for different solutions
-    self.calcA:list[Point] = []#constains error numbers for different solutions
   
   def distance(self,item0:Point,item1:Point) -> int:
     return item0.distance(self.distanceCalcID,item1)#calls the distance method contained in the class point
@@ -69,7 +65,10 @@ class Knn:
         distances.append(dist(j,self.distance(test,j)))#calculate the distance
     return distances
 
-  def errorRate(self)->int:#counts the number of True in error array
+  def errorRate(self,msg:str = "")->int:#counts the number of True in error array
+    if(len(self.solution) == 1):
+      print("guess =",self.referencePoints[::-1][0].label, ", correct =",self.solution[::-1][0])
+      print(msg,"\n")
     e=0
     for i,j in zip(self.referencePoints[::-1],self.solution[::-1]):
       if i.label != j:
@@ -82,8 +81,8 @@ class Knn:
       rangeOfK = range(1,8,2)
     
     for i in rangeOfK:
-      self.calcK.append(self.buildInternalKNN(i,self.distanceCalcID))
-    return self.calcK
+      (self.buildInternalKNN(i,self.distanceCalcID))
+    return
 
   def buildInternalKNN(self, k, dist, simple = 0):
       k_nn = Knn([*self.ori.copy()],k,dist)#creates a new knn algorithm with a new k and dist

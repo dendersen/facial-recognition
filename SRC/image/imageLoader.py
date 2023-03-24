@@ -5,7 +5,7 @@ from SRC.image.imageEditor import makeVarients
 from SRC.image.imageSaver import saveImage
 extension:str = ".jpg"
 
-def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple[Image.Image,str]]:
+def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False,alowOriginals:bool=True)-> list[tuple[Image.Image,str]]:
   """loads any number of images based on a max volume (per label) and a list of labels in use
   
   Args:
@@ -22,7 +22,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
   outgoingImages:list[Image.Image] = []
   outgoingLabels:list[str] = []
 
-  if (linearLoad):
+  if (linearLoad and alowOriginals):
     for label in labels:
       path:str = "images/original/" + label  + "/"
       for ID in range(0,maxVolume):
@@ -44,7 +44,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           except:
             break
 
-  if(not linearLoad):
+  if((not linearLoad) and alowOriginals):
     for label in labels:
       path:str = "images/original/" + label  + "/"
       ID:int = 0
@@ -93,15 +93,15 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           i += 1
         except:
           break
-  if(not linearLoad):
+  if((not linearLoad) and alowOriginals):
     out = [*zip(outgoingImages,outgoingLabels)]
     shuffle(out)
     return out
   
   return [*zip(outgoingImages,outgoingLabels)]
 
-def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels"],alowModified:bool=False)-> list[tuple[list[list[list[int]]],str]]:
-  image = loadImages(maxVolume, linearLoad, labels, alowModified)
+def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False,alowOriginals:bool=True)-> list[tuple[list[list[list[int]]],str]]:
+  image = loadImages(maxVolume, linearLoad, labels, alowModified,alowOriginals)
   return [(array(img[0]),img[1]) for img in image]
 
 def modifyOriginals(maximum:int = 300,varients:int = 10):
@@ -116,7 +116,10 @@ def modifyOriginals(maximum:int = 300,varients:int = 10):
     elif(image[1] == "David"):
       ID = IDDavid
       IDDavid += varients
-    else:
+    elif(image[1] == "Niels"):
       ID = IDNiels
       IDNiels += varients
+    else:
+      ID = IDOther
+      IDOther += varients
     saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True,)

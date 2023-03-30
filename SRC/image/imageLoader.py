@@ -134,8 +134,8 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7):
   otherImagePath = tf.data.Dataset.list_files(otherFolderPath+'\*.jpg').take(loadAmount)
   
   # Adds label to imagepaths
-  chrisData = tf.data.Dataset.zip((chrisImagePath, tf.data.Dataset.from_tensor_slices(tf.zeros(len(chrisImagePath))))) 
-  davidData = tf.data.Dataset.zip((davidImagePath, tf.data.Dataset.from_tensor_slices(tf.ones(len(davidImagePath))))) 
+  chrisData = tf.data.Dataset.zip((chrisImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(chrisImagePath),0)))) 
+  davidData = tf.data.Dataset.zip((davidImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(davidImagePath),1)))) 
   nielsData = tf.data.Dataset.zip((nielsImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(nielsImagePath),2))))
   otherData = tf.data.Dataset.zip((otherImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(otherImagePath),3))))
   

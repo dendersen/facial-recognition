@@ -1,9 +1,10 @@
 from PIL import Image
 from random import shuffle
 from numpy import array
-from SRC.image.imageEditor import makeVarients
-from SRC.image.imageSaver import saveImage
 extension:str = ".jpg"
+
+import os
+import tensorflow as tf
 
 def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False)-> list[tuple[Image.Image,str]]:
   """loads any number of images based on a max volume (per label) and a list of labels in use
@@ -104,24 +105,58 @@ def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer
   image = loadImages(maxVolume, linearLoad, labels, alowModified)
   return [(array(img[0]),img[1]) for img in image]
 
-def modifyOriginals(maximum:int = 300,varients:int = 10):
-  IDChris = 0
-  IDDavid = 0
-  IDNiels = 0
 
-  IDOther = 0
-  for image in loadImgAsArr(maximum,True):
-    ID = 0
-    if(image[1] == "Christoffer"):
-      ID = IDChris
-      IDChris += varients
-    elif(image[1] == "David"):
-      ID = IDDavid
-      IDDavid += varients
-    elif(image[1] == "Niels"):
-      ID = IDNiels
-      IDNiels += varients
-    else:
-      ID = IDOther
-      IDOther += varients
-    saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True,)
+def preprocess(filePath,label):
+  
+  # Read in image from file path
+  byteImg = tf.io.read_file(filePath)
+  # Load in image
+  img = tf.io.decode_jpeg(byteImg)
+  
+  # preprocessing steps:
+  #                   - Resize image to be 100x100x3 pixels, just to make sure
+  #                   - Scale the image to be between 0 and 1
+  img = tf.image.resize(img, (100,100))
+  img = img/255.0
+  return (img,label)
+
+def loadDataset(loadAmount: int, trainDataSize: float = 0.7):
+  # Important paths to data
+  chrisFolderPath = os.path.join('images/modified','Christoffer')
+  davidFolderPath = os.path.join('images/modified','David')
+  nielsFolderPath = os.path.join('images/modified','Niels')
+  otherFolderPath = os.path.join('images/modified','Other')
+  
+  # makes tenserflowlist of imagepaths
+  chrisImagePath = tf.data.Dataset.list_files(chrisFolderPath+'\*.jpg').take(loadAmount)
+  davidImagePath = tf.data.Dataset.list_files(davidFolderPath+'\*.jpg').take(loadAmount)
+  nielsImagePath = tf.data.Dataset.list_files(nielsFolderPath+'\*.jpg').take(loadAmount)
+  otherImagePath = tf.data.Dataset.list_files(otherFolderPath+'\*.jpg').take(loadAmount)
+  
+  # Adds label to imagepaths
+  chrisData = tf.data.Dataset.zip((chrisImagePath, tf.data.Dataset.from_tensor_slices(tf.zeros(len(chrisImagePath))))) 
+  davidData = tf.data.Dataset.zip((davidImagePath, tf.data.Dataset.from_tensor_slices(tf.ones(len(davidImagePath))))) 
+  nielsData = tf.data.Dataset.zip((nielsImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(nielsImagePath),2))))
+  otherData = tf.data.Dataset.zip((otherImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(otherImagePath),3))))
+  
+  # concatenates the data together
+  chrisAndDavid = chrisData.concatenate(davidData)
+  chrisDavidAndNiels = chrisAndDavid.concatenate(nielsData)
+  data = chrisDavidAndNiels.concatenate(otherData)
+  
+  # Lodes the images
+  data = data.map(preprocess)
+  data = data.cache()
+  data = data.shuffle(buffer_size=1024)
+  
+  # Training partition
+  trainData = data.take(round(len(data)*trainDataSize))
+  trainData = trainData.batch(16)
+  trainData = trainData.prefetch(8)
+  
+  # Testing partition
+  testData = data.skip(round(len(data)*trainDataSize))
+  # testData = testData.take(round(len(data)*(1-trainDataSize)))
+  testData = testData.batch(16)
+  testData = testData.prefetch(8)
+  return (trainData, testData)

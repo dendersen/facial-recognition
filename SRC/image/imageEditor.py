@@ -1,3 +1,6 @@
+from SRC.image.imageSaver import saveImage
+from SRC.image.imageLoader import loadImgAsArr
+
 # TODO lav en funktion som:
 # tager imod et kvadratisk billede af n- størelse af typen nr array 
 # billedet har er en buffer rundt om ansigtet
@@ -14,6 +17,8 @@
 import numpy as np
 import random
 import uuid
+
+from SRC.image.imageSaver import saveImage
 
 def makeVarients(image: list[list[list[int]]], variantNumber:int = 10) -> list[list[list[list[int]]]]: 
     # Height and width is always the same. It's defined as size
@@ -33,6 +38,28 @@ def makeVarients(image: list[list[list[int]]], variantNumber:int = 10) -> list[l
         
         faces.append(newVariant)
     return faces
+
+def modifyOriginals(maximum:int = 300,varients:int = 10):
+  IDChris = 0
+  IDDavid = 0
+  IDNiels = 0
+
+  IDOther = 0
+  for image in loadImgAsArr(maximum,True):
+    ID = 0
+    if(image[1] == "Christoffer"):
+      ID = IDChris
+      IDChris += varients
+    elif(image[1] == "David"):
+      ID = IDDavid
+      IDDavid += varients
+    elif(image[1] == "Niels"):
+      ID = IDNiels
+      IDNiels += varients
+    else:
+      ID = IDOther
+      IDOther += varients
+    saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True,)
 
 
 

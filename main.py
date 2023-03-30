@@ -1,10 +1,9 @@
 from SRC.image.imageCapture import Cam
-from SRC.image.imageEditor import *
+from SRC.image.imageEditor import makeVarients
+import numpy as np
 import SRC.image.imageLoader as IL
 import SRC.image.imageSaver as IS
 import cv2 as cv
-
-IL.modifyOriginals()
 
 
 # make an instance of camera

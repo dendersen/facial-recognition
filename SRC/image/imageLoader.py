@@ -6,7 +6,7 @@ extension:str = ".jpg"
 import os
 import tensorflow as tf
 
-def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False)-> list[tuple[Image.Image,str]]:
+def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=True,alowOriginals= False)-> list[tuple[Image.Image,str]]:
   """loads any number of images based on a max volume (per label) and a list of labels in use
   
   Args:

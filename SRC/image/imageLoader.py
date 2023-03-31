@@ -28,7 +28,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       for ID in range(0,maxVolume):
         try:
             img = Image.open(path+str(ID)+extension)
-            outgoingImages.append(img)
+            outgoingImages.append(img.crop((10,10,110,110)))
             outgoingLabels.append(label)
         except:
           break
@@ -53,7 +53,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       try:
         while (True):
           img = Image.open(path+str(ID)+extension)
-          tempOutgoingImages.append(img)
+          tempOutgoingImages.append(img.crop((10,10,110,110)))
           tempOutgoingLabels.append(label)
           ID += 1
       except:
@@ -93,7 +93,8 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           i += 1
         except:
           break
-  if((not linearLoad) and alowOriginals):
+  
+  if((not linearLoad)):
     out = [*zip(outgoingImages,outgoingLabels)]
     shuffle(out)
     return out
@@ -108,7 +109,7 @@ def modifyOriginals(maximum:int = 300,varients:int = 10):
   IDChris = 0
   IDDavid = 0
   IDNiels = 0
-  for image in loadImgAsArr(300,True):
+  for image in loadImgAsArr(maximum,True):
     ID = 0
     if(image[1] == "Christoffer"):
       ID = IDChris
@@ -122,4 +123,4 @@ def modifyOriginals(maximum:int = 300,varients:int = 10):
     else:
       ID = IDOther
       IDOther += varients
-    saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True,)
+    saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True)

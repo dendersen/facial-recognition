@@ -51,7 +51,7 @@ def findOpenID(ID:int,path:str) -> int:
     except:
       return ID
 
-def imageScale(img:Image.Image, isCroped:bool, desiredWidth:int = 100, desiredHeight:int = 100) -> Image.Image:
+def imageScale(img:Image.Image, isModified:bool, desiredWidth:int = 100, desiredHeight:int = 100) -> Image.Image:
   """scales the input image to the desired size using linear scaling
   
   Args:
@@ -62,13 +62,10 @@ def imageScale(img:Image.Image, isCroped:bool, desiredWidth:int = 100, desiredHe
   Returns:
       Image.Image: the scaled image
   """
-  if not isCroped:
-    img = img.resize((120,120))
-    img = img.crop((10,10,desiredWidth+10,desiredHeight+10))
+  if not isModified:
+    return img.resize(120,120)
   else:
-    img = img.resize((100,100))
-  
-  return img
+    return img.resize((100,100))
 
 def arrToPIL(img: list[list[list[int]]]):
   return Image.fromarray(img)

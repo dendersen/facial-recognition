@@ -1,12 +1,14 @@
 from PIL import Image
 from random import shuffle
 from numpy import array
-extension:str = ".jpg"
+from typing import List, Tuple
 
 import os
 import tensorflow as tf
+extension:str = ".jpg"
 
-def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=True,alowOriginals= False,cropOri:bool = True)-> list[tuple[Image.Image,str]]:
+def loadImages(maxVolume:int, linearLoad:bool,labels:List[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=True,alowOriginals= False,cropOri:bool = True)-> List[Tuple[Image.Image,str]]:
+
   """loads any number of images based on a max volume (per label) and a list of labels in use
   
   Args:
@@ -108,7 +110,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
   
   return [*zip(outgoingImages,outgoingLabels)]
 
-def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False,alowOriginals:bool = True,cropOri:bool = False)-> list[tuple[list[list[list[int]]],str]]:
+def loadImgAsArr(maxVolume:int, linearLoad:bool, labels: List[str] = ("Christoffer", "David", "Niels", "Other"),alowModified:bool=False,alowOriginals:bool = True,cropOri:bool = False)-> List[Tuple[List[List[List[int]]],str]]:
   image = loadImages(maxVolume, linearLoad, labels, alowModified,alowOriginals,cropOri)
   return [(array(img[0]),img[1]) for img in image]
 

@@ -117,28 +117,62 @@ def buildData(loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int =
   testData = testData.prefetch(8)
   return (trainData, testData)
 
+def buildData2(loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int = 16):
+  # Important paths to data
+  posPath = os.path.join('images\DataSiameseNetwork','positive')
+  negPath = os.path.join('images\DataSiameseNetwork','negative')
+  ancPath = os.path.join('images\DataSiameseNetwork','anchor')
+  
+  # load data
+  anchor = tf.data.Dataset.list_files(ancPath+'\*.jpg').take(loadAmount)
+  positive = tf.data.Dataset.list_files(posPath+'\*.jpg').take(loadAmount)
+  negative = tf.data.Dataset.list_files(negPath+'\*.jpg').take(loadAmount)
+  
+  # build a dataset of our data
+  positives = tf.data.Dataset.zip((anchor,positive, tf.data.Dataset.from_tensor_slices(tf.ones(len(anchor)))))
+  negatives = tf.data.Dataset.zip((anchor,negative, tf.data.Dataset.from_tensor_slices(tf.zeros(len(anchor)))))
+  data = positives.concatenate(negatives)
+  
+  # Build dataloader pipline
+  data = data.map(preprocessTwin)
+  data = data.cache()
+  data = data.shuffle(buffer_size=1024)
+  
+  # Training partition
+  trainData = data.take(round(len(data)*trainDataSize))
+  trainData = trainData.batch(bachSize)
+  trainData = trainData.prefetch(8)
+  
+  # Testing partition
+  testData = data.skip(round(len(data)*trainDataSize))
+  # testData = testData.take(round(len(data)*(1-trainDataSize)))
+  testData = testData.batch(bachSize)
+  testData = testData.prefetch(8)
+  return (trainData, testData)
+
+
 def makeImbedding():
-    inp = Input(shape=(100,100,3), name='inputImage')
-    
-    # First block
-    c1 = Conv2D(64, (10,10), activation='relu')(inp)
-    m1 = MaxPooling2D(64, (2,2), padding='same')(c1)
-    
-    # Second block
-    c2 = Conv2D(128, (7,7), activation='relu')(m1)
-    m2 = MaxPooling2D(64, (2,2), padding='same')(c2)
-    
-    # Third block 
-    c3 = Conv2D(128, (4,4), activation='relu')(m2)
-    m3 = MaxPooling2D(64, (2,2), padding='same')(c3)
-    
-    # Final embedding block
-    c4 = Conv2D(256, (4,4), activation='relu')(m3)
-    f1 = Flatten()(c4)
-    d1 = Dense(4096, activation='sigmoid')(f1)
-    
-    
-    return Model(inputs=[inp], outputs=[d1], name='embedding')
+  inp = Input(shape=(100,100,3), name='inputImage')
+  
+  # First block
+  c1 = Conv2D(64, (10,10), activation='relu')(inp)
+  m1 = MaxPooling2D(64, (2,2), padding='same')(c1)
+  
+  # Second block
+  c2 = Conv2D(128, (7,7), activation='relu')(m1)
+  m2 = MaxPooling2D(64, (2,2), padding='same')(c2)
+  
+  # Third block 
+  c3 = Conv2D(128, (4,4), activation='relu')(m2)
+  m3 = MaxPooling2D(64, (2,2), padding='same')(c3)
+  
+  # Final embedding block
+  c4 = Conv2D(256, (4,4), activation='relu')(m3)
+  f1 = Flatten()(c4)
+  d1 = Dense(4096, activation='sigmoid')(f1)
+  
+  
+  return Model(inputs=[inp], outputs=[d1], name='embedding')
 class L1Dist(Layer):
   
   def __init__(self, **kwargs):
@@ -167,13 +201,62 @@ def makeSiameseModel():
   
   return Model(inputs=[inputImage, validationImage], outputs=classifier, name='SiameseNetwork')
 
-siameseNetwork = makeSiameseModel()
+@tf.function # Compiles into a tensorflow graph
+def trainStep(siameseNetwork,batch: int):
+  
+  # Record all of our operations
+  with tf.GradientTape() as tape: # Allows for capture of gradients from network
+    
+    # Get anchor and the positive/negative image
+    X = batch[:2]
+    # Get label
+    y = batch[2]
+    
+    # Forward pass
+    yhat = siameseNetwork(X, training=True)
+    # Calculate loss
+    loss = binaryCrossLoss(y, yhat)
+  print("Model loss is at: ", loss)
+  
+  # Calculate gradients
+  grad = tape.gradient(loss, siameseNetwork.trainable_variables)
+  
+  # Calculate updated weights and apply to siamese model
+  optimizer.apply_gradients(zip(grad, siameseNetwork.trainable_variables))
+  
+  return loss
 
-loss = tf.losses.BinaryCrossentropy(from_logits=True)
+def train(siameseNetwork, data, EPOCHS):
+  checkpointDir = './training_checkpoints'
+  checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
+  checkpoint = tf.train.Checkpoint(opt=optimizer, siameseNetwork=siameseNetwork)
+  
+  # loop through epochs
+  for epoch in range(1,EPOCHS+1):
+    print('\n Epoch {}/{}'.format(epoch,EPOCHS))
+    progbar = tf.keras.utils.Progbar(len(data))
+    
+    # Creating a metric object 
+    r = Recall()
+    p = Precision()
+    
+    # Loop through each batch
+    for idx, batch in enumerate(data):
+      # Run train step here
+      loss = trainStep(siameseNetwork,batch)
+      yhat = siameseNetwork.predict(batch[:2])
+      r.update_state(batch[2], yhat)
+      p.update_state(batch[2], yhat) 
+      progbar.update(idx+1)
+    print("Loss is at: ",loss.numpy(), ": Recall result is at: ", r.result().numpy(), ": Precision is at: ", p.result().numpy())
+    
+    # Save checkpoints
+    if epoch % 10 == 0: 
+      checkpoint.save(file_prefix=checkpointPrefix)
+
+siameseNetwork = makeSiameseModel()
+binaryCrossLoss = tf.losses.BinaryCrossentropy(from_logits=True)
 optimizer = tf.keras.optimizers.Adam(1e-4)
-siameseNetwork.compile(optimizer=optimizer, 
-              loss=loss,
-              metrics=['accuracy'])
 
 siameseNetwork.summary()
 
@@ -182,75 +265,9 @@ rewriteDataToMatchNetwork("Niels")
 # Get data from files
 (trainingData, testData) = buildData()
 
-epochs = 2
+train(siameseNetwork=siameseNetwork,data=trainingData,EPOCHS=50)
 
 
-history = siameseNetwork.fit(
-    trainingData,
-    validation_data=testData,
-    epochs=epochs
-)
-
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
-
-loss = history.history['loss']
-val_loss = history.history['val_loss']
-
-epochs_range = range(epochs)
-
-plt.figure(figsize=(8, 8))
-plt.subplot(1, 2, 1)
-plt.plot(epochs_range, acc, label='Training Accuracy')
-plt.plot(epochs_range, val_acc, label='Validation Accuracy')
-plt.legend(loc='lower right')
-plt.title('Training and Validation Accuracy')
-
-plt.subplot(1, 2, 2)
-plt.plot(epochs_range, loss, label='Training Loss')
-plt.plot(epochs_range, val_loss, label='Validation Loss')
-plt.legend(loc='upper right')
-plt.title('Training and Validation Loss')
-plt.show()
-
-# @tf.function # Compiles into a tensorflow graph
-# def trainStep(self, batch):
-  
-#   # Record all of our operations
-#   with tf.GradientTape() as tape: # Allows for capture of gradients from network
-    
-#     # Get anchor and the positive/negative image
-#     X = batch[:2]
-#     # Get label
-#     y = batch[2]
-    
-#     # Forward pass
-#     yhat = self.siameseModel(X, training=True)
-#     # Calculate loss
-#     loss = self.binaryCrossLoss(y, yhat)
-#   # print("Model loss is at: ", loss)
-  
-#   # Calculate gradients
-#   grad = tape.gradient(loss, self.siameseModel.trainable_variables)
-  
-#   # Calculate updated weights and apply to siamese model
-#   self.opt.apply_gradients(zip(grad, self.siameseModel.trainable_variables))
-
-# def train(self, data, EPOCHS):
-#   # loop through epochs
-#   for epoch in range(1,EPOCHS+1):
-#     print('\n Epoch {}/{}'.format(epoch,EPOCHS))
-#     progbar = tf.keras.utils.Progbar(len(data))
-    
-#     # loop through each batch
-#     for idx, batch in enumerate(data):
-#       # Run train steps
-#       self.trainStep(batch)
-#       progbar.update(idx+1)
-    
-#     # Save checkpoints
-#     if epoch % 2 == 0:
-#       self.checkpoint.save(file_prefix=self.checkpointPrefix)
 
 # def trainAI(self, siameseModel):
 #   self.siameseModel = siameseModel

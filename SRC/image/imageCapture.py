@@ -2,12 +2,13 @@ import cv2 as cv
 from facenet_pytorch.models.mtcnn import MTCNN
 import numpy as np
 import torch
+from typing import List
 
 class Cam:
   def __init__(self,cameraDevice:int) -> None:
     self.cameraDevice = cv.VideoCapture(cameraDevice)
   
-  def readCam(self)->list[list[int]]:
+  def readCam(self)->List[List[int]]:
     #-- 2. Read the video stream
     if not self.cameraDevice.isOpened:
       print('--(!)Error opening video capture')
@@ -23,7 +24,7 @@ class Cam:
   def close(self):
     self.cameraDevice.release()
   
-  def processFace(self, frame) -> list[list[list[int]]]:
+  def processFace(self, frame) -> List[List[List[int]]]:
     # get fram shape
     height, width, channel = frame.shape
     

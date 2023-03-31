@@ -1,3 +1,4 @@
+from math import floor
 import cv2 as cv
 import numpy as np
 from SRC.AI.knn.knn import Knn
@@ -42,39 +43,50 @@ def getPic():
           # save original face
           RGBface = cv.cvtColor(BGRface, cv.COLOR_BGR2RGB)
           print("This is the shape of the face picture: ", RGBface.shape)
-          Camera.close()
           return RGBface
 
 def getYN(msg:str) -> bool:
   return input(msg + " Y/N: ").capitalize() == "Y"
 
-def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = False, ):
+def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, takePic:bool = True, distribution:float = 0.3,distID:int = 1,threadCount:int = 1):
   ori = useOriginals
   if(ori == None):
     ori = getYN("should original images be used")
   
   mod = useModified
-  if(useModified == None):
+  if(useModified == None and ori):
+    mod = getYN("should modified images  be used")
+  elif(not ori):
+    mod = True
+  else:
     mod = getYN("should modified images  be used")
   
   if(makeModified):
     IL.modifyOriginals()
   
-  perLabel:int = takeInput("the number of images to be loaded: ")
+  if(perLabel == None):
+    perLabel:int = takeInput("the number of images to be loaded: ")
   
   all = IL.loadImgAsArr(perLabel,False,alowModified=mod,alowOriginals=ori)
-  
-  if((perLabel*8 != len(all) and ori and mod) or (perLabel*4 != len(all) and (ori ^ mod))):
-    if(getYN("do you want equal number of all labels?") == "Y"):
-      while((perLabel*8 != len(all) and ori and mod) or (perLabel*4 != len(all) and (ori ^ mod))):
-        perLabel -= 1
-        all = IL.loadImgAsArr(perLabel,False,alowModified=True)
+  if(equal or equal == None):
+    if((perLabel*8 != len(all) and ori and mod) or (perLabel*4 != len(all) and (ori ^ mod))):
+      if(equal or getYN("do you want equal number of all labels?") == "Y"):
+        while((perLabel*8 != len(all) and ori and mod) or (perLabel*4 != len(all) and (ori ^ mod))):
+          perLabel -= 1
+          all = IL.loadImgAsArr(perLabel,False,alowModified=True)
   
   all = makePoints(all)
   print("final number of images per label:",perLabel)
   
-  k = Knn(all.copy(),distID=1)
-  k.UpdateDataset([makePoint((getPic(),"UnKnown"))],[getValidLabel("who is this a picture of? ")])
+  k:Knn = None
+  
+  if(takePic):
+    k = Knn(all.copy(),distID=distID,threads=threadCount)
+    k.UpdateDataset([makePoint((getPic(),"UnKnown"))],[getValidLabel("who is this a picture of? ")])
+  else:
+    known = all[0:floor(len(all)*distribution)].copy()
+    unkown = all[::-1][0:floor(len(all)*(1-distribution))].copy()
+    
+    k = Knn(known,distID=distID,threads=threadCount)
+    k.UpdateDataset(unkown,[i.label for i in unkown])
   print(k.testK(range(5,int(len(all)/6),2)))
-
-runKNN()

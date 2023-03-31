@@ -29,7 +29,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       for ID in range(0,maxVolume):
         try:
             img = Image.open(path+str(ID)+extension)
-            outgoingImages.append(img.resize(120,120).crop((10,10,110,110)))
+            outgoingImages.append(img.resize((120,120)).crop((10,10,110,110)))
             outgoingLabels.append(label)
         except:
           break
@@ -54,7 +54,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       try:
         while (True):
           img = Image.open(path+str(ID)+extension)
-          tempOutgoingImages.append(img.resize(120,120).crop((10,10,110,110)))
+          tempOutgoingImages.append(img.resize((120,120)).crop((10,10,110,110)))
           tempOutgoingLabels.append(label)
           ID += 1
       except:

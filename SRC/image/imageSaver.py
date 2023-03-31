@@ -63,7 +63,7 @@ def imageScale(img:Image.Image, isModified:bool, desiredWidth:int = 100, desired
       Image.Image: the scaled image
   """
   if not isModified:
-    return img.resize(120,120)
+    return img.resize((120,120))
   else:
     return img.resize((100,100))
 

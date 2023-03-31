@@ -5,6 +5,7 @@ import SRC.image.imageLoader as IL
 import SRC.image.imageSaver as IS
 import cv2 as cv
 
+IL.modifyOriginals()
 
 # make an instance of camera
 Camera = Cam(0)

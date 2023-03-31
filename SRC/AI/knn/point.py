@@ -18,9 +18,9 @@ class Point:
   def euclid(self,point:Point)->float:
     return sqrt(sum([(i-l)**2 for i,l in zip(self.location,point.location)]))
   def manhattan(self,point:Point)->float:
-    return abs((sum([(i-l) for i,l in (self.location,point.location)])))
+    return abs((sum([(i-l) for i,l in zip(self.location,point.location)])))
   def chebyshev(self,point:Point)->float:
-    return max([abs(i-l) for i,l in (self.location,point.location)])
+    return max([abs(i-l) for i,l in zip(self.location,point.location)])
   def hamming(self,point:Point) -> List[int]:
     differ = []
     for i,l in (self.location,point.location):

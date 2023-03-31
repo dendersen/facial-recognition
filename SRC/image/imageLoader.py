@@ -23,13 +23,13 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
   outgoingImages:list[Image.Image] = []
   outgoingLabels:list[str] = []
 
-  if (linearLoad):
+  if (linearLoad and alowOriginals):
     for label in labels:
       path:str = "images/original/" + label  + "/"
       for ID in range(0,maxVolume):
         try:
             img = Image.open(path+str(ID)+extension)
-            outgoingImages.append(img)
+            outgoingImages.append(img.crop((10,10,110,110)))
             outgoingLabels.append(label)
         except:
           break
@@ -45,7 +45,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           except:
             break
 
-  if(not linearLoad):
+  if((not linearLoad) and alowOriginals):
     for label in labels:
       path:str = "images/original/" + label  + "/"
       ID:int = 0
@@ -54,7 +54,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       try:
         while (True):
           img = Image.open(path+str(ID)+extension)
-          tempOutgoingImages.append(img)
+          tempOutgoingImages.append(img.crop((10,10,110,110)))
           tempOutgoingLabels.append(label)
           ID += 1
       except:
@@ -94,7 +94,8 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
           i += 1
         except:
           break
-  if(not linearLoad):
+  
+  if((not linearLoad)):
     out = [*zip(outgoingImages,outgoingLabels)]
     shuffle(out)
     return out

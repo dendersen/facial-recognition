@@ -16,7 +16,6 @@ from SRC.image.imageLoader import loadImgAsArr
 
 import numpy as np
 import random
-import uuid
 
 from SRC.image.imageSaver import saveImage
 

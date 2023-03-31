@@ -36,10 +36,10 @@ class Cam:
     if type(face) != np.ndarray:
       print("there is no face!")
     else:
-      xLeft = int(min(face[0][0], face[0][2]))-20
-      xRight = int(max(face[0][0], face[0][2]))+20
-      yBottom = int(min(face[0][1], face[0][3]))-20
-      yTop = int(max(face[0][1], face[0][3]))+20
+      xLeft = int(min(face[0][0], face[0][2]))-30
+      xRight = int(max(face[0][0], face[0][2]))+30
+      yBottom = int(min(face[0][1], face[0][3]))-30
+      yTop = int(max(face[0][1], face[0][3]))+30
       
       faceWidth = xRight-xLeft
       faceHeight = yTop-yBottom

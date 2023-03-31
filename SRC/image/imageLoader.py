@@ -29,7 +29,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       for ID in range(0,maxVolume):
         try:
             img = Image.open(path+str(ID)+extension)
-            outgoingImages.append(img.crop((10,10,110,110)))
+            outgoingImages.append(img.resize(120,120).crop((10,10,110,110)))
             outgoingLabels.append(label)
         except:
           break
@@ -54,7 +54,7 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       try:
         while (True):
           img = Image.open(path+str(ID)+extension)
-          tempOutgoingImages.append(img.crop((10,10,110,110)))
+          tempOutgoingImages.append(img.resize(120,120).crop((10,10,110,110)))
           tempOutgoingLabels.append(label)
           ID += 1
       except:
@@ -95,15 +95,15 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
         except:
           break
   
-  if((not linearLoad)):
+  if(not linearLoad):
     out = [*zip(outgoingImages,outgoingLabels)]
     shuffle(out)
     return out
   
   return [*zip(outgoingImages,outgoingLabels)]
 
-def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False)-> list[tuple[list[list[list[int]]],str]]:
-  image = loadImages(maxVolume, linearLoad, labels, alowModified)
+def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False,alowOriginals:bool = True)-> list[tuple[list[list[list[int]]],str]]:
+  image = loadImages(maxVolume, linearLoad, labels, alowModified,alowOriginals)
   return [(array(img[0]),img[1]) for img in image]
 
 

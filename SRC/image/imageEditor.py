@@ -44,7 +44,7 @@ def modifyOriginals(maximum:int = 300,varients:int = 10):
   IDNiels = 0
 
   IDOther = 0
-  for image in loadImgAsArr(maximum,True):
+  for image in loadImgAsArr(maximum,True,cropOri= True):
     ID = 0
     if(image[1] == "Christoffer"):
       ID = IDChris

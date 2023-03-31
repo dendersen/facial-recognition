@@ -6,7 +6,7 @@ extension:str = ".jpg"
 import os
 import tensorflow as tf
 
-def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=True,alowOriginals= False)-> list[tuple[Image.Image,str]]:
+def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=True,alowOriginals= False,cropOri:bool = True)-> list[tuple[Image.Image,str]]:
   """loads any number of images based on a max volume (per label) and a list of labels in use
   
   Args:
@@ -29,7 +29,10 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       for ID in range(0,maxVolume):
         try:
             img = Image.open(path+str(ID)+extension)
-            outgoingImages.append(img.crop((10,10,110,110)))
+            if(cropOri):
+              outgoingImages.append(img.crop((10,10,110,110)))
+            else:
+              outgoingImages.append(img)
             outgoingLabels.append(label)
         except:
           break
@@ -54,7 +57,10 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
       try:
         while (True):
           img = Image.open(path+str(ID)+extension)
-          tempOutgoingImages.append(img.crop((10,10,110,110)))
+          if(cropOri):
+            tempOutgoingImages.append(img.crop((10,10,110,110)))
+          else:
+            tempOutgoingImages.append(img)
           tempOutgoingLabels.append(label)
           ID += 1
       except:
@@ -102,8 +108,8 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer",
   
   return [*zip(outgoingImages,outgoingLabels)]
 
-def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False,alowOriginals:bool = True)-> list[tuple[list[list[list[int]]],str]]:
-  image = loadImages(maxVolume, linearLoad, labels, alowModified,alowOriginals)
+def loadImgAsArr(maxVolume:int, linearLoad:bool,labels:list[str] = ["Christoffer","David","Niels","Other"],alowModified:bool=False,alowOriginals:bool = True,cropOri:bool = False)-> list[tuple[list[list[list[int]]],str]]:
+  image = loadImages(maxVolume, linearLoad, labels, alowModified,alowOriginals,cropOri)
   return [(array(img[0]),img[1]) for img in image]
 
 

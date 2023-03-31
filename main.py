@@ -6,7 +6,6 @@ import cv2 as cv
 
 IL.modifyOriginals()
 
-
 # make an instance of camera
 Camera = Cam(0)
 

@@ -12,7 +12,7 @@ print("hello world")
 
 
 # 0 = Christoffer, 1 = David, 2 = Niels and 3 = Other
-trainingData, testData = IL.loadDataset(loadAmount=300,trainDataSize=.7)
+trainingData, testData = IL.loadDataset(loadAmount=350,trainDataSize=.7)
 
 trainingSamples = trainingData.as_numpy_iterator()
 traniingSample = trainingSamples.next()
@@ -43,9 +43,9 @@ model.add(Conv2D(filters=32, kernel_size=(5, 5), strides=(1, 1), padding='valid'
 model.add(MaxPooling2D())
 model.add(Flatten())
 model.add(Dense(236,activation='relu'))
-model.add(Dropout(rate=.5))
+model.add(Dropout(rate=.7))
 model.add(Dense(128,activation='relu'))
-model.add(Dropout(rate=.5))
+model.add(Dropout(rate=.7))
 model.add(Dense(units=4))
 
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3), 
@@ -84,7 +84,7 @@ def fitModelToData(model, trainingData, testData, epochs: int = 5):
     plt.show()
 
 # Fit the model to our data
-fitModelToData(model, trainingData,testData,epochs=10)
+fitModelToData(model, trainingData,testData,epochs=5)
 
 # tag et nyt billede
 Camera = IC.Cam(0)
@@ -111,6 +111,7 @@ while True:
                 "This image most likely belongs to {} with a {:.2f} percent confidence."
                 .format(classNames[np.argmax(score)], 100 * np.max(score))
             )
+            print(score)
     if cv.waitKey(10) == 27:
         break
 

@@ -120,7 +120,16 @@ def preprocess(filePath,label):
   img = img/255.0
   return (img,label)
 
-def loadDataset(loadAmount: int, trainDataSize: float = 0.7):
+
+def loadDataset(loadAmount: int, trainDataSize: float = 0.7, bachSize: int = 16):
+  """
+  Lodes a set amount of the dataset. 
+  splits the dataset into traning data and test data
+  the deta is in baches
+  
+  Returns: (trainData, testData)
+  """
+  
   # Important paths to data
   chrisFolderPath = os.path.join('images/modified','Christoffer')
   davidFolderPath = os.path.join('images/modified','David')
@@ -151,12 +160,12 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7):
   
   # Training partition
   trainData = data.take(round(len(data)*trainDataSize))
-  trainData = trainData.batch(16)
+  trainData = trainData.batch(bachSize)
   trainData = trainData.prefetch(8)
   
   # Testing partition
   testData = data.skip(round(len(data)*trainDataSize))
   # testData = testData.take(round(len(data)*(1-trainDataSize)))
-  testData = testData.batch(16)
+  testData = testData.batch(bachSize)
   testData = testData.prefetch(8)
   return (trainData, testData)

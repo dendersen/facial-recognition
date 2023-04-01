@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from typing import List
 
-class Cam:
+class Camera:
   def __init__(self,cameraDevice:int) -> None:
     self.cameraDevice = cv.VideoCapture(cameraDevice)
   

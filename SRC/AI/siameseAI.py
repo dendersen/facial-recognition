@@ -7,7 +7,7 @@ import glob
 import cv2 as cv
 from matplotlib import pyplot as plt
 import numpy as np
-
+import math
 
 # Avoid out of out of memmory errors by setting GPU Memory Consumption Growth
 # Avoid OOM errors by setting GPU Memory Consumption Growth
@@ -149,24 +149,6 @@ class L1Dist(Layer):
   def call(self, inputEmbedding, validationEmbedding):
     return tf.math.abs(inputEmbedding - validationEmbedding)
 
-def makeSiameseModel():
-  
-  embedding = makeImbedding()
-  
-  # Handle inputs
-  inputImage = Input(name='inputImage', shape=(100, 100, 3)) # Anchor image input in the network
-  validationImage = Input(name='ValImage', shape=(100, 100, 3)) # Validation image in the network
-  
-  # Combine siamese distance components
-  siameseLayer = L1Dist()
-  siameseLayer._name = 'distance'
-  distances = siameseLayer(embedding(inputImage), embedding(validationImage))
-  
-  # Classification layer
-  classifier = Dense(1, activation='sigmoid')(distances)
-  
-  return Model(inputs=[inputImage, validationImage], outputs=classifier, name='SiameseNetwork')
-
 @tf.function # Compiles into a tensorflow graph
 def trainStep(siameseNetwork,batch: int, optimizer, binaryCrossLoss):
   
@@ -191,51 +173,6 @@ def trainStep(siameseNetwork,batch: int, optimizer, binaryCrossLoss):
   optimizer.apply_gradients(zip(grad, siameseNetwork.trainable_variables))
   
   return loss
-
-def train(siameseNetwork, data, EPOCHS, optimizer = tf.keras.optimizers.Adam(1e-4), binaryCrossLoss = tf.losses.BinaryCrossentropy(from_logits=True)):
-  checkpointDir = './training_checkpoints'
-  checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
-  checkpoint = tf.train.Checkpoint(opt=optimizer, siameseNetwork=siameseNetwork)
-  
-  # loop through epochs
-  for epoch in range(1,EPOCHS+1):
-    print('\n Epoch {}/{}'.format(epoch,EPOCHS))
-    progbar = tf.keras.utils.Progbar(len(data))
-    
-    # Creating a metric object 
-    r = Recall()
-    p = Precision()
-    
-    # Loop through each batch
-    for idx, batch in enumerate(data):
-      # Run train step here
-      loss = trainStep(siameseNetwork, batch, optimizer, binaryCrossLoss)
-      yhat = siameseNetwork.predict(batch[:2])
-      r.update_state(batch[2], yhat)
-      p.update_state(batch[2], yhat) 
-      progbar.update(idx+1)
-    print("Loss is at: ",loss.numpy(), ": Recall result is at: ", r.result().numpy(), ": Precision is at: ", p.result().numpy())
-    
-    # Save checkpoints
-    if epoch % 10 == 0: 
-      checkpoint.save(file_prefix=checkpointPrefix)
-
-def makePrediction(siameseNetwork, testInput: list, testVal: list, yTrue: list):
-  yHat = siameseNetwork.predict([testInput, testVal])
-  # Post processing the results 
-  predictions = [1 if prediction > 0.5 else 0 for prediction in yHat]
-  print("The prediction was:      ",predictions, "\n It should have guessed: ", yTrue)
-  
-  # Creating a metric object 
-  m = Precision()
-  
-  # Calculating the recall value 
-  m.update_state(yTrue, yHat)
-  
-  # Return Recall Result
-  print("The model was: ",m.result().numpy(), " sure")
-  
-  return predictions
 
 def verify(siameseNetwork, detectionThreshold: float = 0.5, verificationThreshold: float = 0.5, person: str = "Christoffer"):
   """Verify if a given detection is the same as positive in the model
@@ -268,3 +205,164 @@ def verify(siameseNetwork, detectionThreshold: float = 0.5, verificationThreshol
   verified: bool = verification > verificationThreshold
   
   return results, verified
+
+def showSiameseBatch(testInput,testVal,yTrue,yHat, person):
+  
+  inputTmages = testInput
+  testImages = testVal
+  labels = yTrue
+  modelGuess = yHat
+  
+  height = math.ceil((len(inputTmages)+len(testImages))/4)
+  fig, axs = plt.subplots(4, height, figsize=(16,18))
+  indexInput = 0
+  indexTest = 0
+  fig.suptitle("The person we are looking at is: "+person+" : The first row shows what should be guessed, the second shows the guess", fontsize=14, fontweight='bold')
+  for i in range(4):
+    for j in range(height):
+      if i%2 == 0:
+        axs[i,j].imshow(inputTmages[indexInput])
+        axs[i,j].set_title("Should guess: " + str(yTrue[indexInput]))
+        axs[i,j].axis("off")
+        indexInput = indexInput+1
+      else:
+        axs[i,j].imshow(testImages[indexTest])
+        axs[i,j].set_title(str(yHat[indexTest]))
+        axs[i,j].axis("off")
+        indexTest = indexTest+1
+  plt.show()
+
+class SiameseNeuralNetwork:
+  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int = 16):
+    self.person: str = person
+    
+    self.loadAmount: int = loadAmount
+    self.trainDataSize: float = trainDataSize
+    self.bachSize: int = bachSize
+    
+    if self.person == "Christoffer":
+      self.personName = "Chris"
+    else:
+      self.personName = self.person
+    
+    rewriteDataToMatchNetwork(person=self.person)
+    
+    # Optimizer and loss
+    self.binaryCrossLoss = tf.losses.BinaryCrossentropy(from_logits=True)
+    self.optimizer = tf.keras.optimizers.Adam(1e-4)
+    
+    # Get data from files
+    (self.trainingData, self.testData) = buildData()
+    
+    # # Get a batch of test data
+    # testInput, testVal, yTrue = testData.as_numpy_iterator().next()
+    
+    # Reload model 
+    self.siameseNetwork = tf.keras.models.load_model("siamesemodel"+self.personName+".h5", 
+                                      custom_objects={'L1Dist':L1Dist, 'BinaryCrossentropy':tf.losses.BinaryCrossentropy})
+    
+    # Gives a summary of the network
+    self.siameseNetwork.summary()
+  
+  # Make an new instance of a model
+  def makeSiameseModel(self):
+    embedding = makeImbedding()
+    
+    # Handle inputs
+    inputImage = Input(name='inputImage', shape=(100, 100, 3)) # Anchor image input in the network
+    validationImage = Input(name='ValImage', shape=(100, 100, 3)) # Validation image in the network
+    
+    # Combine siamese distance components
+    siameseLayer = L1Dist()
+    siameseLayer._name = 'distance'
+    distances = siameseLayer(embedding(inputImage), embedding(validationImage))
+    
+    # Classification layer
+    classifier = Dense(1, activation='sigmoid')(distances)
+    
+    return Model(inputs=[inputImage, validationImage], outputs=classifier, name='SiameseNetwork')
+  
+  def train(self, EPOCHS: int = 10):
+    checkpointDir = './training_checkpoints'
+    checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
+    checkpoint = tf.train.Checkpoint(opt=self.optimizer, siameseNetwork=self.siameseNetwork)
+    
+    # loop through epochs
+    for epoch in range(1,EPOCHS+1):
+      print('\n Epoch {}/{}'.format(epoch,EPOCHS))
+      progbar = tf.keras.utils.Progbar(len(self.trainingData))
+      
+      # Creating a metric object 
+      r = Recall()
+      p = Precision()
+      
+      # Loop through each batch
+      for idx, batch in enumerate(self.trainingData):
+        # Run train step here
+        loss = trainStep(self.siameseNetwork, batch, self.optimizer, self.binaryCrossLoss)
+        yhat = self.siameseNetwork.predict(batch[:2])
+        r.update_state(batch[2], yhat)
+        p.update_state(batch[2], yhat) 
+        progbar.update(idx+1)
+      print("Loss is at: ",loss.numpy(), ": Recall result is at: ", r.result().numpy(), ": Precision is at: ", p.result().numpy())
+      
+      # Save checkpoints
+      if epoch % 10 == 0: 
+        checkpoint.save(file_prefix=checkpointPrefix)
+    # Replace the old model with the new trained one
+    self.siameseNetwork.save('siamesemodel'+self.personName+'.h5')
+  
+  # Makes some predictions on some data and outputs how sure it was
+  def makeAPredictionOnABatch(self):
+    testInput, testVal, yTrue = self.testData.as_numpy_iterator().next()
+    yHat = self.siameseNetwork.predict([testInput, testVal])
+    # Post processing the results 
+    predictions = [1 if prediction > 0.5 else 0 for prediction in yHat]
+    print("The prediction was:      ",predictions, "\n It should have guessed: ", yTrue)
+    
+    # Creating a metric object 
+    m = Precision()
+    
+    # Calculating the recall value 
+    m.update_state(yTrue, yHat)
+    
+    # Return Recall Result
+    print("The model was: ",m.result().numpy(), " sure")
+    
+    showSiameseBatch(testInput, testVal, yTrue, yHat, self.person)
+    
+    return predictions
+  
+  def runSiameseModel(self,Camera):
+    """Runs the siamese model you are currently working on
+    Args:
+        Camera: Takes an instance of the class Cam from imageCapture, e.g Cam(0)
+    Returns:
+      True if you are verified and false if not
+    """
+    
+    # Initialize a Cam class
+    Camera = Camera
+    
+    while True:
+      frame = Camera.readCam()
+      
+      # Verification trigger
+      if cv.waitKey(10) & 0xFF == ord('v'):
+        face = Camera.processFace(frame)
+        if type(face) == np.ndarray:
+          cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
+          # Run verification
+          results, verified = verify(self.siameseNetwork, 0.5, 0.5, person=self.person)
+          if verified:
+            print("This is " + self.person)
+            print("The results are: ", results)
+            return True
+          else:
+            print("This is not " + self.person)
+            print("The results are: ", results)
+            return False
+      
+      if cv.waitKey(10) & 0xFF == ord('q'):
+        break
+    cv.destroyAllWindows()

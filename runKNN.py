@@ -3,7 +3,7 @@ import cv2 as cv
 import numpy as np
 from SRC.AI.knn.knn import Knn
 from SRC.AI.knn.point import Point
-from SRC.image.imageCapture import Cam
+from SRC.image.imageCapture import Camera
 
 # from SRC.image.imageEditor import makeVarients
 import SRC.image.imageLoader as IL
@@ -34,7 +34,7 @@ def getValidLabel(msg:str)->str:
     print("not a valid label")
 
 def getPic():
-  Camera = Cam(0)
+  Camera = Camera(0)
   print("smile!")
   while True:
     pic = Camera.readCam()

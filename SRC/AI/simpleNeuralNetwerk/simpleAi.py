@@ -87,7 +87,7 @@ def fitModelToData(model, trainingData, testData, epochs: int = 5):
 fitModelToData(model, trainingData,testData,epochs=5)
 
 # tag et nyt billede
-Camera = IC.Cam(0)
+Camera = IC.Camera(0)
 while True:
     pic = Camera.readCam()
     if cv.waitKey(10) == 32: # wait for spacebar to be pressed

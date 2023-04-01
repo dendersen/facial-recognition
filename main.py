@@ -1,4 +1,4 @@
-from SRC.image.imageCapture import Cam
+from SRC.image.imageCapture import Camera
 from SRC.image.imageEditor import makeVarients,modifyOriginals
 import numpy as np
 import SRC.image.imageLoader as IL
@@ -8,7 +8,7 @@ import cv2 as cv
 modifyOriginals()
 
 # make an instance of camera
-Camera = Cam(0)
+Camera = Camera(0)
 
 while True:
   pic = Camera.readCam()

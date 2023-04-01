@@ -1,8 +1,9 @@
 from typing import Union
 from PIL import Image
+from typing import List, Tuple
 
 extension:str = ".jpg"
-def saveImage(img:Union[list[Image.Image], list[list[list[list[int]]]],Image.Image], label:str, modified:bool ,ID:int = 0,forceID:bool = False) -> None:
+def saveImage(img:Union[List[Image.Image], List[List[List[List[int]]]],Image.Image], label:str, modified:bool ,ID:int = 0,forceID:bool = False) -> None:
   """saves an image to the correct location based on it's label
   
   Args:
@@ -67,5 +68,5 @@ def imageScale(img:Image.Image, isModified:bool, desiredWidth:int = 100, desired
   else:
     return img.resize((100,100))
 
-def arrToPIL(img: list[list[list[int]]]):
+def arrToPIL(img: List[List[List[int]]]):
   return Image.fromarray(img)

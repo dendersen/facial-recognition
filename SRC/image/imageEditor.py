@@ -1,6 +1,6 @@
 from SRC.image.imageSaver import saveImage
 from SRC.image.imageLoader import loadImgAsArr
-
+from typing import List, Tuple
 # TODO lav en funktion som:
 # tager imod et kvadratisk billede af n- størelse af typen nr array 
 # billedet har er en buffer rundt om ansigtet
@@ -19,7 +19,7 @@ import random
 
 from SRC.image.imageSaver import saveImage
 
-def makeVarients(image: list[list[list[int]]], variantNumber:int = 10) -> list[list[list[list[int]]]]: 
+def makeVarients(image: List[List[List[int]]], variantNumber:int = 10) -> List[List[List[List[int]]]]: 
     # Height and width is always the same. It's defined as size
     size  = image.shape[0]
     

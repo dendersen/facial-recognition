@@ -283,9 +283,9 @@ class SiameseNeuralNetwork:
     return Model(inputs=[inputImage, validationImage], outputs=classifier, name='SiameseNetwork')
   
   def train(self, EPOCHS: int = 10):
-    checkpointDir = './training_checkpoints'
-    checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
-    checkpoint = tf.train.Checkpoint(opt=self.optimizer, siameseNetwork=self.siameseNetwork)
+    # checkpointDir = './training_checkpoints'
+    # checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
+    # checkpoint = tf.train.Checkpoint(opt=self.optimizer, siameseNetwork=self.siameseNetwork)
     
     # loop through epochs
     for epoch in range(1,EPOCHS+1):
@@ -306,9 +306,9 @@ class SiameseNeuralNetwork:
         progbar.update(idx+1)
       print("Loss is at: ",loss.numpy(), ": Recall result is at: ", r.result().numpy(), ": Precision is at: ", p.result().numpy())
       
-      # Save checkpoints
-      if epoch % 10 == 0: 
-        checkpoint.save(file_prefix=checkpointPrefix)
+      # # Save checkpoints
+      # if epoch % 10 == 0: 
+      #   checkpoint.save(file_prefix=checkpointPrefix)
     # Replace the old model with the new trained one
     self.siameseNetwork.save('siamesemodel'+self.personName+'.h5')
   
@@ -356,12 +356,12 @@ class SiameseNeuralNetwork:
           results, verified = verify(self.siameseNetwork, 0.5, 0.5, person=self.person)
           if verified:
             print("This is " + self.person)
-            print("The results are: ", results)
-            return True
+            # print("The results are: ", results)
+            
           else:
             print("This is not " + self.person)
-            print("The results are: ", results)
-            return False
+            # print("The results are: ", results)
+            
       
       if cv.waitKey(10) & 0xFF == ord('q'):
         break

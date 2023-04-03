@@ -228,7 +228,7 @@ def showSiameseBatch(testInput,testVal,yTrue,yHat, person):
         indexInput = indexInput+1
       else:
         axs[i,j].imshow(testImages[indexTest])
-        axs[i,j].set_title(str(yHat[indexTest][0]))
+        axs[i,j].set_title(str(round(yHat[indexTest][0],4)))
         axs[i,j].axis("off")
         indexTest = indexTest+1
   plt.show()

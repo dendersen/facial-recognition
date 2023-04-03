@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import math
 import tarfile
+import random
 
 # Avoid out of out of memmory errors by setting GPU Memory Consumption Growth
 # Avoid OOM errors by setting GPU Memory Consumption Growth
@@ -218,23 +219,22 @@ def verify(siameseNetwork, detectionThreshold: float = 0.5, verificationThreshol
       results, verified
   """
   
-  
   # Build results array
   results = []
-  for image in os.listdir(os.path.join('images\original', person)): # Could also be "images\modified"
+  for image in os.listdir('images\\DataSiameseNetwork\\verificationImages'):
     if ".jpg" in image:
       inputImg = preprocess(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'))
-      validationImg = preprocess(os.path.join('images\original', person, image)) # Could also be "images\modified"
+      validationImg = preprocess(os.path.join('images\\DataSiameseNetwork\\verificationImages', image))
       
       # Make Predictions 
       result = siameseNetwork.predict(list(np.expand_dims([inputImg, validationImg], axis=1)))
-      results.append(result)
+      results.append(result[0][0])
   
   # Detection Threshold: Metric above which a prediciton is considered positive 
   detection = np.sum(np.array(results) > detectionThreshold)
   
   # Verification Threshold: Proportion of positive predictions / total positive samples 
-  verification = detection / len(os.listdir(os.path.join('images\original', person))) # Could also be "images\modified"
+  verification = detection / len(os.listdir('images\\DataSiameseNetwork\\verificationImages')) # Could also be "images\modified"
   verified: bool = verification > verificationThreshold
   
   return results, verified
@@ -424,6 +424,27 @@ class SiameseNeuralNetwork:
     Returns:
       True if you are verified and false if not
     """
+    verificationPath = 'images\\DataSiameseNetwork\\verificationImages'
+    # Clear varificationImages
+    print('\n Removeing images from: '+ verificationPath)
+    for file_name in os.listdir(verificationPath):
+      # construct full file path
+      file = os.path.join(verificationPath, file_name)
+      if ".jpg" in file:
+        os.remove(file)
+    
+    # Get verify images
+    pathToImagesFromPerson = os.path.join('images\original', self.person)
+    print('\n Adding 10 random images to: '+ verificationPath +' : from: '+ pathToImagesFromPerson)
+    
+    highestID = len(os.listdir(pathToImagesFromPerson))
+    
+    for i in range(10):
+      path = os.path.join(pathToImagesFromPerson, str(random.randint(0,highestID))+'.jpg')
+      img = cv.imread(path)
+      newPath = os.path.join(verificationPath, str(len(os.listdir(verificationPath)))+'.jpg')
+      cv.imwrite(newPath, img)
+    
     
     # Initialize a Cam class
     Camera = Camera
@@ -440,11 +461,11 @@ class SiameseNeuralNetwork:
           results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
           if verified:
             print("This is " + self.person)
-            # print("The results are: ", results)
+            print("The results are: ", results)
             
           else:
             print("This is not " + self.person)
-            # print("The results are: ", results)
+            print("The results are: ", results)
             
       
       if cv.waitKey(10) & 0xFF == ord('q'):

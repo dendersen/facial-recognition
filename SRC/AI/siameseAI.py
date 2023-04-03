@@ -159,30 +159,23 @@ class L1Dist(Layer):
   def call(self, inputEmbedding, validationEmbedding):
     return tf.math.abs(inputEmbedding - validationEmbedding)
 
-@tf.function # Compiles into a tensorflow graph
-def trainStep(siameseNetwork,batch: int, optimizer, binaryCrossLoss):
+# Make an new instance of a model
+def makeSiameseModel():
+  embedding = makeImbedding()
   
-  # Record all of our operations
-  with tf.GradientTape() as tape: # Allows for capture of gradients from network
-    
-    # Get anchor and the positive/negative image
-    X = batch[:2]
-    # Get label
-    y = batch[2]
-    
-    # Forward pass
-    yhat = siameseNetwork(X, training=True)
-    # Calculate loss
-    loss = binaryCrossLoss(y, yhat)
-  print("Model loss is at: ", loss)
+  # Handle inputs
+  inputImage = Input(name='inputImage', shape=(100, 100, 3)) # Anchor image input in the network
+  validationImage = Input(name='ValImage', shape=(100, 100, 3)) # Validation image in the network
   
-  # Calculate gradients
-  grad = tape.gradient(loss, siameseNetwork.trainable_variables)
+  # Combine siamese distance components
+  siameseLayer = L1Dist()
+  siameseLayer._name = 'distance'
+  distances = siameseLayer(embedding(inputImage), embedding(validationImage))
   
-  # Calculate updated weights and apply to siamese model
-  optimizer.apply_gradients(zip(grad, siameseNetwork.trainable_variables))
+  # Classification layer
+  classifier = Dense(1, activation='sigmoid')(distances)
   
-  return loss
+  return Model(inputs=[inputImage, validationImage], outputs=classifier, name='SiameseNetwork')
 
 def verify(siameseNetwork, detectionThreshold: float = 0.5, verificationThreshold: float = 0.5, person: str = "Christoffer"):
   """Verify if a given detection is the same as positive in the model
@@ -241,7 +234,7 @@ def showSiameseBatch(testInput,testVal,yTrue,yHat, person):
   plt.show()
 
 class SiameseNeuralNetwork:
-  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int = 16, addFacesInTheWild: bool = False):
+  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int = 16, addFacesInTheWild: bool = False, resetNetwork: bool = False):
     self.person: str = person
     
     if self.person == "Christoffer":
@@ -252,70 +245,124 @@ class SiameseNeuralNetwork:
     rewriteDataToMatchNetwork(person=self.person, addFacesInTheWild = addFacesInTheWild)
     
     # Optimizer and loss
-    self.binaryCrossLoss = tf.losses.BinaryCrossentropy(from_logits=True)
-    self.optimizer = tf.keras.optimizers.Adam(1e-3)
+    self.lossObject = tf.losses.BinaryCrossentropy(from_logits=True)
+    self.optimizer = tf.keras.optimizers.Adam(1e-4)
     
     # Get data from files
     (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=bachSize)
     
     # # Get a batch of test data
     # testInput, testVal, yTrue = testData.as_numpy_iterator().next()
-    
-    # Reload model 
-    self.siameseNetwork = tf.keras.models.load_model("siamesemodel"+self.personName+".h5", 
-                                      custom_objects={'L1Dist':L1Dist, 'BinaryCrossentropy':tf.losses.BinaryCrossentropy})
+    if resetNetwork:
+      self.siameseNetwork = makeSiameseModel()
+    else:
+      # Reload model 
+      self.siameseNetwork = tf.keras.models.load_model("siamesemodel"+self.personName+".h5", 
+                                        custom_objects={'L1Dist':L1Dist, 'BinaryCrossentropy':tf.losses.BinaryCrossentropy})
     
     # Gives a summary of the network
     self.siameseNetwork.summary()
   
-  # Make an new instance of a model
-  def makeSiameseModel(self):
-    embedding = makeImbedding()
-    
-    # Handle inputs
-    inputImage = Input(name='inputImage', shape=(100, 100, 3)) # Anchor image input in the network
-    validationImage = Input(name='ValImage', shape=(100, 100, 3)) # Validation image in the network
-    
-    # Combine siamese distance components
-    siameseLayer = L1Dist()
-    siameseLayer._name = 'distance'
-    distances = siameseLayer(embedding(inputImage), embedding(validationImage))
-    
-    # Classification layer
-    classifier = Dense(1, activation='sigmoid')(distances)
-    
-    return Model(inputs=[inputImage, validationImage], outputs=classifier, name='SiameseNetwork')
-  
   def train(self, EPOCHS: int = 10):
+    # Keep results for plotting
+    trainLossResults = []
+    trainAccuracyResults = []
+    testAccuracyResults = []
+    
+    # loss funktion
+    def loss(images, labels, training):
+      # training=training is needed only if there are layers with different
+      # behavior during training versus inference (e.g. Dropout).
+      predictions = self.siameseNetwork(images, training=training)
+      
+      return self.lossObject(y_true=labels, y_pred=predictions)
+    
+    # gets the gradiants
+    @tf.function # Compiles into a tensorflow graph
+    def grad(batch: int):
+      # Record all of our operations
+      with tf.GradientTape() as tape: # Allows for capture of gradients from network
+        
+        # Get anchor and the positive/negative image
+        X = batch[:2]
+        # Get label
+        y = batch[2]
+        
+        lossValue = loss(images=X,labels=y,training=True)
+        
+      return lossValue, tape.gradient(lossValue, self.siameseNetwork.trainable_variables)
+    
     # checkpointDir = './training_checkpoints'
     # checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
     # checkpoint = tf.train.Checkpoint(opt=self.optimizer, siameseNetwork=self.siameseNetwork)
-    progress:list[float] = []
+    
     # loop through epochs
-    for epoch in range(1,EPOCHS+1):
+    for epoch in range(EPOCHS):
+      
+      epochLossAvg = tf.keras.metrics.Mean()
+      epochAccuracy = tf.keras.metrics.BinaryAccuracy()
+      
       print('\n Epoch {}/{}'.format(epoch,EPOCHS))
       progbar = tf.keras.utils.Progbar(len(self.trainingData))
       
-      # Creating a metric object 
-      r = Recall()
-      p = Precision()
+      # # Creating a metric object 
+      # r = Recall()
+      # p = Precision()
       
       # Loop through each batch
       for idx, batch in enumerate(self.trainingData):
         # Run train step here
-        loss = trainStep(self.siameseNetwork, batch, self.optimizer, self.binaryCrossLoss)
-        yhat = self.siameseNetwork.predict(batch[:2])
-        r.update_state(batch[2], yhat)
-        p.update_state(batch[2], yhat) 
+        lossValue, grads = grad(batch)
+        self.optimizer.apply_gradients(zip(grads, self.siameseNetwork.trainable_variables))
+        
+        # Track progress
+        epochLossAvg.update_state(lossValue)  # Add current batch loss
+        # Compare predicted label to actual label
+        # training=True is needed only if there are layers with different
+        # behavior during training versus inference (e.g. Dropout).
+        X = batch[:2]
+        y = batch[2]
+        epochAccuracy.update_state(y, self.siameseNetwork(X, training=True))
+        
+        # Test the mode on the test data
+        testAccuracy = tf.keras.metrics.Accuracy()
+        
+        # training=False is needed only if there are layers with different
+        # behavior during training versus inference (e.g. Dropout).
+        logits = self.siameseNetwork(X, training=False)
+        prediction = tf.math.argmax(logits, axis=1, output_type=tf.int64)
+        testAccuracy(prediction, y)
         progbar.update(idx+1)
-      print("Loss is at: ",loss.numpy(), ": Recall result is at: ", r.result().numpy(), ": Precision is at: ", p.result().numpy())
-      progress.append(p.result().numpy())
-      # # Save checkpoints
-      # if epoch % 10 == 0: 
-      #   checkpoint.save(file_prefix=checkpointPrefix)
+      
+      # End epoch
+      trainLossResults.append(epochLossAvg.result())
+      trainAccuracyResults.append(epochAccuracy.result())
+      testAccuracyResults.append(testAccuracy.result())
+      
+      if epoch % 1 == 0:
+        # Save checkpoints
+        # checkpoint.save(file_prefix=checkpointPrefix)
+        
+        print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}, Test set accuracy: {:.3%}".format(epoch,
+                                                                    epochLossAvg.result(),
+                                                                    epochAccuracy.result(),
+                                                                    testAccuracy.result()))
+    
+    # Show how the training went
+    fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
+    fig.suptitle('Training Metrics')
+    
+    axes[0].set_ylabel("Loss", fontsize=14)
+    axes[0].plot(trainLossResults)
+    
+    axes[1].set_ylabel("Accuracy", fontsize=14)
+    axes[1].set_xlabel("Epoch", fontsize=14)
+    axes[1].plot(trainAccuracyResults, 'go--', label = 'Train_accuracy')
+    axes[1].plot(testAccuracyResults, 'go--', label = 'Test_accuracy' )
+    plt.show()
+    
     # Replace the old model with the new trained one
     self.siameseNetwork.save('siamesemodel'+self.personName+'.h5')
-    return progress
   
   # Makes some predictions on some data and outputs how sure it was
   def makeAPredictionOnABatch(self):

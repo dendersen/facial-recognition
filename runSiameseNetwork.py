@@ -4,8 +4,8 @@ from SRC.AI.siameseAI import *
 from SRC.image.imageEditor import modifyOriginals
 
 modifyOriginals()
-
-Network = SiameseNeuralNetwork(person="David", loadAmount=500, trainDataSize=.7, bachSize=16, addFacesInTheWild=True, resetNetwork=True) # Load amount should be half that of modified image lenght
-prog = Network.train(20)
+# Load amount should be half that of modified image lenght or original_lengt * 10 / 2
+Network = SiameseNeuralNetwork(person="Christoffer", loadAmount=1030, trainDataSize=.7, bachSize=16, addFacesInTheWild=True, resetNetwork=False) 
+prog = Network.train(10)
 Network.makeAPredictionOnABatch()
-Network.runSiameseModel(Camera=Camera(0), detectionThreshold=0.8, verificationThreshold=0.9)
+Network.runSiameseModel(Camera=Camera(0), detectionThreshold=0.5, verificationThreshold=0.7) 

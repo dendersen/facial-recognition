@@ -21,27 +21,42 @@ def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
   negPath = os.path.join('images\DataSiameseNetwork','negative')
   ancPath = os.path.join('images\DataSiameseNetwork','anchor')
   
+  print('\n Removeing images from: '+ posPath)
+  progbar = tf.keras.utils.Progbar(len(os.listdir(posPath))-1)
+  i = 0
   for file_name in os.listdir(posPath):
     # construct full file path
     file = os.path.join(posPath, file_name)
     if ".jpg" in file:
-      # print('Deleting file:', file)
       os.remove(file)
-  
+      i = i+1
+      progbar.update(i)
+
+  print('\n Removeing images from: '+ negPath)
+  progbar = tf.keras.utils.Progbar(len(os.listdir(negPath))-1)
+  i = 0
   for file_name in os.listdir(negPath):
     # construct full file path
     file = os.path.join(negPath, file_name)
     if ".jpg" in file:
-      # print('Deleting file:', file)
       os.remove(file)
+      i = i+1
+      progbar.update(i)
   
+  print('\n Removeing images from: '+ ancPath)
+  progbar = tf.keras.utils.Progbar(len(os.listdir(ancPath))-1)
+  i = 0
   for file_name in os.listdir(ancPath):
     # construct full file path
     file = os.path.join(ancPath, file_name)
     if ".jpg" in file:
-      # print('Deleting file:', file)
       os.remove(file)
+      i = i+1
+      progbar.update(i)
   
+  print('\n Adding images to: '+ negPath +' : from: images\modified\Other')
+  progbar = tf.keras.utils.Progbar(len(os.listdir('images\modified\Other'))-1)
+  i = 0
   # Get all negative data
   for picture in os.listdir('images\modified\Other'):
     if ".jpg" in picture:
@@ -49,20 +64,33 @@ def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
       img = cv.imread(path)
       newPath = os.path.join(negPath, picture)
       cv.imwrite(newPath, img)
+      i = i+1
+      progbar.update(i)
+  
   
   # Get exstra negative data, from Untar Labelled Faces in the Wild Dataset
   if addFacesInTheWild:
-    # Uncompress Tar GZ Labelled faces int the wild
+    # Uncompress Tar GZ Labelled faces in the wild
     with tarfile.open('lfw.tgz', "r:gz") as tar:
+      print('\n Adding exstra images to: '+ negPath +' : From Untar Labelled Faces in the Wild Dataset')
+      progbar = tf.keras.utils.Progbar(len(tar.getmembers()))
+      i = 0
       # Move LFW Images to the following repository data/negative
       for member in tar.getmembers():
+        i = i+1
+        progbar.update(i)
         if member.name.endswith(".jpg") or member.name.endswith(".png"):
           member.name = os.path.basename(member.name)
           tar.extract(member, negPath)
   
+  
   # Get all anchor data and positive data
   datapath = os.path.join('images/modified/', person)
   i = 0
+  
+  print('\n Adding images to: '+ posPath +' and '+ ancPath +' : from: '+ datapath)
+  progbar = tf.keras.utils.Progbar(len(os.listdir(datapath)))
+  j = 0
   for picture in os.listdir(datapath):
     if ".jpg" in picture:
       if i % 2 == 0:
@@ -77,6 +105,8 @@ def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
         newPath = os.path.join(posPath, picture)
         cv.imwrite(newPath, img)
         i = i+1
+    j = j+1
+    progbar.update(j)
 
 # loades the image
 def preprocess(filePath):
@@ -358,8 +388,8 @@ class SiameseNeuralNetwork:
     
     axes[1].set_ylabel("Accuracy", fontsize=14)
     axes[1].set_xlabel("Epoch", fontsize=14)
-    axes[1].plot(trainAccuracyResults, 'go--', label = 'Train_accuracy', color = 'blue')
-    axes[1].plot(testAccuracyResults, 'go--', label = 'Test_accuracy', color = 'red')
+    axes[1].plot(trainAccuracyResults, 'bo--', label = 'Train_accuracy')
+    axes[1].plot(testAccuracyResults, 'ro--', label = 'Test_accuracy')
     axes[1].legend()
     plt.show()
     

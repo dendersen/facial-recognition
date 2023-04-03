@@ -3,11 +3,11 @@ from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, F
 from tensorflow.keras.metrics import Precision, Recall
 import tensorflow as tf
 import os
-import glob
 import cv2 as cv
 from matplotlib import pyplot as plt
 import numpy as np
 import math
+import tarfile
 
 # Avoid out of out of memmory errors by setting GPU Memory Consumption Growth
 # Avoid OOM errors by setting GPU Memory Consumption Growth
@@ -15,7 +15,7 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus: 
   tf.config.experimental.set_memory_growth(gpu, True)
 
-def rewriteDataToMatchNetwork(person: str):
+def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
   # Important paths to data
   posPath = os.path.join('images\DataSiameseNetwork','positive')
   negPath = os.path.join('images\DataSiameseNetwork','negative')
@@ -49,6 +49,16 @@ def rewriteDataToMatchNetwork(person: str):
       img = cv.imread(path)
       newPath = os.path.join(negPath, picture)
       cv.imwrite(newPath, img)
+  
+  # Get exstra negative data, from Untar Labelled Faces in the Wild Dataset
+  if addFacesInTheWild:
+    # Uncompress Tar GZ Labelled faces int the wild
+    with tarfile.open('lfw.tgz', "r:gz") as tar:
+      # Move LFW Images to the following repository data/negative
+      for member in tar.getmembers():
+        if member.name.endswith(".jpg") or member.name.endswith(".png"):
+          member.name = os.path.basename(member.name)
+          tar.extract(member, negPath)
   
   # Get all anchor data and positive data
   datapath = os.path.join('images/modified/', person)
@@ -210,8 +220,6 @@ def showSiameseBatch(testInput,testVal,yTrue,yHat, person):
   
   inputTmages = testInput
   testImages = testVal
-  labels = yTrue
-  modelGuess = yHat
   
   height = math.ceil((len(inputTmages)+len(testImages))/4)
   fig, axs = plt.subplots(4, height, figsize=(16,18))
@@ -222,37 +230,33 @@ def showSiameseBatch(testInput,testVal,yTrue,yHat, person):
     for j in range(height):
       if i%2 == 0:
         axs[i,j].imshow(inputTmages[indexInput])
-        axs[i,j].set_title("Should guess: " + str(yTrue[indexInput]))
+        axs[i,j].set_title(str(yTrue[indexInput]))
         axs[i,j].axis("off")
         indexInput = indexInput+1
       else:
         axs[i,j].imshow(testImages[indexTest])
-        axs[i,j].set_title(str(yHat[indexTest]))
+        axs[i,j].set_title(str(yHat[indexTest][0]))
         axs[i,j].axis("off")
         indexTest = indexTest+1
   plt.show()
 
 class SiameseNeuralNetwork:
-  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int = 16):
+  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int = 16, addFacesInTheWild: bool = False):
     self.person: str = person
-    
-    self.loadAmount: int = loadAmount
-    self.trainDataSize: float = trainDataSize
-    self.bachSize: int = bachSize
     
     if self.person == "Christoffer":
       self.personName = "Chris"
     else:
       self.personName = self.person
     
-    rewriteDataToMatchNetwork(person=self.person)
+    rewriteDataToMatchNetwork(person=self.person, addFacesInTheWild = addFacesInTheWild)
     
     # Optimizer and loss
     self.binaryCrossLoss = tf.losses.BinaryCrossentropy(from_logits=True)
-    self.optimizer = tf.keras.optimizers.Adam(1e-4)
+    self.optimizer = tf.keras.optimizers.Adam(1e-3)
     
     # Get data from files
-    (self.trainingData, self.testData) = buildData()
+    (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=bachSize)
     
     # # Get a batch of test data
     # testInput, testVal, yTrue = testData.as_numpy_iterator().next()
@@ -286,7 +290,7 @@ class SiameseNeuralNetwork:
     # checkpointDir = './training_checkpoints'
     # checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
     # checkpoint = tf.train.Checkpoint(opt=self.optimizer, siameseNetwork=self.siameseNetwork)
-    
+    progress:list[float] = []
     # loop through epochs
     for epoch in range(1,EPOCHS+1):
       print('\n Epoch {}/{}'.format(epoch,EPOCHS))
@@ -305,12 +309,13 @@ class SiameseNeuralNetwork:
         p.update_state(batch[2], yhat) 
         progbar.update(idx+1)
       print("Loss is at: ",loss.numpy(), ": Recall result is at: ", r.result().numpy(), ": Precision is at: ", p.result().numpy())
-      
+      progress.append(p.result().numpy())
       # # Save checkpoints
       # if epoch % 10 == 0: 
       #   checkpoint.save(file_prefix=checkpointPrefix)
     # Replace the old model with the new trained one
     self.siameseNetwork.save('siamesemodel'+self.personName+'.h5')
+    return progress
   
   # Makes some predictions on some data and outputs how sure it was
   def makeAPredictionOnABatch(self):
@@ -333,7 +338,7 @@ class SiameseNeuralNetwork:
     
     return predictions
   
-  def runSiameseModel(self,Camera):
+  def runSiameseModel(self,Camera, detectionThreshold: float = 0.5, verificationThreshold: float = 0.5):
     """Runs the siamese model you are currently working on
     Args:
         Camera: Takes an instance of the class Cam from imageCapture, e.g Cam(0)
@@ -353,7 +358,7 @@ class SiameseNeuralNetwork:
         if type(face) == np.ndarray:
           cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
           # Run verification
-          results, verified = verify(self.siameseNetwork, 0.5, 0.5, person=self.person)
+          results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
           if verified:
             print("This is " + self.person)
             # print("The results are: ", results)

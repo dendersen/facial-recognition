@@ -19,16 +19,5 @@ while True:
         RGBface = cv.cvtColor(BGRface, cv.COLOR_BGR2RGB)
         print("This is the shape of the face picture: ", RGBface.shape)
         IS.saveImage([RGBface],"Christoffer",False)
-        
-        # make variant
-        BGRnewVariants = makeVarients(BGRface)
-        
-        # save all variants
-        for variant in BGRnewVariants:
-          # change from BGR to RGB
-          variant = cv.cvtColor(variant, cv.COLOR_BGR2RGB)
-          print("This is the shape of the variant: ", variant.shape)
-          # save variant
-          IS.saveImage([variant],"Christoffer",True)
   if cv.waitKey(10) == 27:
     break

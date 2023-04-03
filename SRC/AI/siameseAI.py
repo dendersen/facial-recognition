@@ -301,6 +301,7 @@ class SiameseNeuralNetwork:
       
       epochLossAvg = tf.keras.metrics.Mean()
       epochAccuracy = tf.keras.metrics.BinaryAccuracy()
+      testepochAccuracy = tf.keras.metrics.BinaryAccuracy()
       
       print('\n Epoch {}/{}'.format(epoch,EPOCHS))
       progbar = tf.keras.utils.Progbar(len(self.trainingData))
@@ -323,30 +324,30 @@ class SiameseNeuralNetwork:
         X = batch[:2]
         y = batch[2]
         epochAccuracy.update_state(y, self.siameseNetwork(X, training=True))
-        
+        #Update progbar
+        progbar.update(idx+1)
+      
+      for idx, batch in enumerate(self.testData):
+        X = batch[:2]
+        y = batch[2]
         # Test the mode on the test data
-        testAccuracy = tf.keras.metrics.Accuracy()
-        
         # training=False is needed only if there are layers with different
         # behavior during training versus inference (e.g. Dropout).
-        logits = self.siameseNetwork(X, training=False)
-        prediction = tf.math.argmax(logits, axis=1, output_type=tf.int64)
-        testAccuracy(prediction, y)
-        progbar.update(idx+1)
+        testepochAccuracy.update_state(y,self.siameseNetwork(X,training = False))
       
       # End epoch
       trainLossResults.append(epochLossAvg.result())
       trainAccuracyResults.append(epochAccuracy.result())
-      testAccuracyResults.append(testAccuracy.result())
+      testAccuracyResults.append(testepochAccuracy.result())
       
       if epoch % 1 == 0:
         # Save checkpoints
         # checkpoint.save(file_prefix=checkpointPrefix)
         
-        print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}, Test set accuracy: {:.3%}".format(epoch,
+        print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}, Test accuracy: {:.3%}".format(epoch,
                                                                     epochLossAvg.result(),
                                                                     epochAccuracy.result(),
-                                                                    testAccuracy.result()))
+                                                                    testepochAccuracy.result()))
     
     # Show how the training went
     fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
@@ -357,8 +358,9 @@ class SiameseNeuralNetwork:
     
     axes[1].set_ylabel("Accuracy", fontsize=14)
     axes[1].set_xlabel("Epoch", fontsize=14)
-    axes[1].plot(trainAccuracyResults, 'go--', label = 'Train_accuracy')
-    axes[1].plot(testAccuracyResults, 'go--', label = 'Test_accuracy' )
+    axes[1].plot(trainAccuracyResults, 'go--', label = 'Train_accuracy', color = 'blue')
+    axes[1].plot(testAccuracyResults, 'go--', label = 'Test_accuracy', color = 'red')
+    axes[1].legend()
     plt.show()
     
     # Replace the old model with the new trained one

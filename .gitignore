@@ -2,4 +2,5 @@ training_checkpoints/
 test.py
 **.pyc
 **.h5
+**.tgz
 /__pycache__/

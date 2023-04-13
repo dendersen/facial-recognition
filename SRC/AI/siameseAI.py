@@ -1,3 +1,4 @@
+from SRC.image.imageEditor import clearPath, modifyOriginals
 from SRC.image.imageLoader import ProcessOther
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
@@ -17,48 +18,19 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus: 
   tf.config.experimental.set_memory_growth(gpu, True)
 
-def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
+def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
   # Important paths to data
   posPath = os.path.join('images\DataSiameseNetwork','positive')
   negPath = os.path.join('images\DataSiameseNetwork','negative')
   ancPath = os.path.join('images\DataSiameseNetwork','anchor')
   tempOtherPath = "images\\modified\\forDataset"
   
-  print('\n Removeing images from: '+ posPath)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(posPath))-1)
-  i = 0
-  for file_name in os.listdir(posPath):
-    # construct full file path
-    file = os.path.join(posPath, file_name)
-    if ".jpg" in file:
-      os.remove(file)
-      i = i+1
-      progbar.update(i)
-#TODO use IE.clearPath
-  print('\n Removeing images from: '+ negPath)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(negPath))-1)
-  i = 0
-  for file_name in os.listdir(negPath):
-    # construct full file path
-    file = os.path.join(negPath, file_name)
-    if ".jpg" in file:
-      os.remove(file)
-      i = i+1
-      progbar.update(i)
-  
-  print('\n Removeing images from: '+ ancPath)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(ancPath))-1)
-  i = 0
-  for file_name in os.listdir(ancPath):
-    # construct full file path
-    file = os.path.join(ancPath, file_name)
-    if ".jpg" in file:
-      os.remove(file)
-      i = i+1
-      progbar.update(i)
-  
+  clearPath(posPath)
+  clearPath(negPath)
+  clearPath(ancPath)
   # Get exstra negative data, from Untar Labelled Faces in the Wild Dataset
-  if addFacesInTheWild:
+  if reprocessDataset:
+    clearPath(tempOtherPath)
     # Uncompress Tar GZ Labelled faces in the wild
     with tarfile.open('lfw.tgz', "r:gz") as tar:
       print('\n Adding exstra images to: '+ tempOtherPath +' : From Untar Labelled Faces in the Wild Dataset')
@@ -71,20 +43,23 @@ def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
         if member.name.endswith(".jpg") or member.name.endswith(".png"):
           member.name = os.path.basename(member.name)
           tar.extract(member, tempOtherPath)
-  ProcessOther()
+    ProcessOther()
   
-  print('\n Adding images to: '+ negPath +' : from: images\modified\Other')
-  progbar = tf.keras.utils.Progbar(len(os.listdir('images\modified\Other'))-1)
-  i = 0
   # Get all negative data
-  for picture in os.listdir('images\modified\Other'):
-    if ".jpg" in picture:
-      path = os.path.join('images\modified\Other', picture)
-      img = cv.imread(path)
-      newPath = os.path.join(negPath, picture)
-      cv.imwrite(newPath, img)
-      i = i+1
-      progbar.update(i)
+  for name in ["Christoffer","Niels","David","Other"]:
+    i = 0
+    if name != person:
+      print('\n Adding images to: '+ negPath +' : from: images\modified\\' + name)
+      progbar = tf.keras.utils.Progbar(len(os.listdir('images\modified\\' + name))-1)
+      for picture in os.listdir('images\\modified\\' + name):
+        if ".jpg" in picture:
+          path = os.path.join('images\modified', name, picture)
+          img = cv.imread(path)
+          newPath = os.path.join(negPath, name + "_" + picture)
+          cv.imwrite(newPath, img)
+          i = i+1
+          progbar.update(i)
+
   
   # Get all anchor data and positive data
   datapath = os.path.join('images/modified/', person)
@@ -136,7 +111,13 @@ def buildData(loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int =
   # load data
   anchor = tf.data.Dataset.list_files(ancPath+'\*.jpg').take(loadAmount)
   positive = tf.data.Dataset.list_files(posPath+'\*.jpg').take(loadAmount)
-  negative = tf.data.Dataset.list_files(negPath+'\*.jpg').take(loadAmount)
+  negative = tf.data.Dataset.list_files(negPath+'\*.jpg').take(len(os.listdir(negPath))-1)
+  
+  # prep negative
+  negative = negative.shuffle(buffer_size=int(len(os.listdir(negPath))/2-1))
+  negative = negative.shuffle(buffer_size=len(os.listdir(negPath))-1)
+  negative = negative.take(loadAmount)
+  
   
   # build a dataset of our data
   positives = tf.data.Dataset.zip((anchor,positive, tf.data.Dataset.from_tensor_slices(tf.ones(len(anchor)))))
@@ -265,7 +246,7 @@ def showSiameseBatch(testInput,testVal,yTrue,yHat, person):
   plt.show()
 
 class SiameseNeuralNetwork:
-  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int = 16, addFacesInTheWild: bool = False, resetNetwork: bool = False):
+  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, varients:int = 4, trainDataSize: float = 0.7, bachSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False):
     self.person: str = person
     
     if self.person == "Christoffer":
@@ -273,7 +254,13 @@ class SiameseNeuralNetwork:
     else:
       self.personName = self.person
     
-    rewriteDataToMatchNetwork(person=self.person, addFacesInTheWild = addFacesInTheWild)
+    if(not useDataset):
+      clearPath("images\modified\Other")
+    modifyOriginals(loadAmount,varients)
+    
+    # Make new loadamount
+    loadAmount = int(math.floor(loadAmount*varients/2))
+    rewriteDataToMatchNetwork(person=self.person, reprocessDataset = reprocessDataset)
     
     # Optimizer and loss
     self.lossObject = tf.losses.BinaryCrossentropy(from_logits=True)
@@ -334,7 +321,7 @@ class SiameseNeuralNetwork:
       epochAccuracy = tf.keras.metrics.BinaryAccuracy()
       testepochAccuracy = tf.keras.metrics.BinaryAccuracy()
       
-      print('\n Epoch {}/{}'.format(epoch,EPOCHS))
+      print('\n Epoch {}/{}'.format(epoch+1,EPOCHS))
       progbar = tf.keras.utils.Progbar(len(self.trainingData))
       
       # # Creating a metric object 

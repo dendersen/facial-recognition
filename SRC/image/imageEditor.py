@@ -1,5 +1,5 @@
 from SRC.image.imageSaver import saveImage
-from SRC.image.imageLoader import loadImgAsArr
+from SRC.image.imageLoader import ProcessOther, loadImgAsArr
 from typing import List, Tuple
 import tensorflow as tf
 import os
@@ -40,48 +40,34 @@ def makeVarients(image: List[List[List[int]]], variantNumber:int = 10) -> List[L
         faces.append(newVariant)
     return faces
 
-def modifyOriginals(maximum:int = 300,varients:int = 10):
+def clearModified():
+  clearPath('images\\modified\\Christoffer')
+  clearPath('images\\modified\\Niels')
+  clearPath('images\\modified\\David')
+  clearPath('images\\modified\\Other')
+
+def clearPath(path:str):
+  print('\n Removeing images from: '+ path)
+  progbar = tf.keras.utils.Progbar(len(os.listdir(path))-1)
+  i = 0
+  for file_name in os.listdir(path):
+    # construct full file path
+    file = os.path.join(path, file_name)
+    if ".jpg" in file:
+      os.remove(file)
+      i = i+1
+      progbar.update(i)
+    else:
+      try:
+        clearPath(file)
+      except:
+        pass
+
+def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
   IDChris = 0
   IDDavid = 0
   IDNiels = 0
-
   IDOther = 0
-  
-  chrisModifiedPath = 'images\\modified\\Christoffer'
-  print('\n Removeing images from: '+ chrisModifiedPath)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(chrisModifiedPath))-1)
-  i = 0
-  for file_name in os.listdir(chrisModifiedPath):
-    # construct full file path
-    file = os.path.join(chrisModifiedPath, file_name)
-    if ".jpg" in file:
-      os.remove(file)
-      i = i+1
-      progbar.update(i)
-  
-  nielsModifiedPath = 'images\\modified\\Niels'
-  print('\n Removeing images from: '+ nielsModifiedPath)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(nielsModifiedPath))-1)
-  i = 0
-  for file_name in os.listdir(nielsModifiedPath):
-    # construct full file path
-    file = os.path.join(nielsModifiedPath, file_name)
-    if ".jpg" in file:
-      os.remove(file)
-      i = i+1
-      progbar.update(i)
-  
-  davidModifiedPath = 'images\\modified\\David'
-  print('\n Removeing images from: '+ davidModifiedPath)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(davidModifiedPath))-1)
-  i = 0
-  for file_name in os.listdir(davidModifiedPath):
-    # construct full file path
-    file = os.path.join(davidModifiedPath, file_name)
-    if ".jpg" in file:
-      os.remove(file)
-      i = i+1
-      progbar.update(i)
   
   for image in loadImgAsArr(maximum,True,cropOri= True):
     ID = 0
@@ -98,6 +84,9 @@ def modifyOriginals(maximum:int = 300,varients:int = 10):
       ID = IDOther
       IDOther += varients
     saveImage(makeVarients(image[0],varients),image[1],True,ID,forceID=True,)
+  
+  if(dataset):
+    ProcessOther()
 
 
 

@@ -32,6 +32,9 @@ def saveImage(img:Union[List[Image.Image], List[List[List[List[int]]]],Image.Ima
     image.save(path + str(ID) + ".jpg")
     ID += 1
   
+  if(len(img) > 5):
+    print(f"{len(img)} images where saved")
+  
   return
 
 def findOpenID(ID:int,path:str) -> int:

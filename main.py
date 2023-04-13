@@ -1,23 +1,24 @@
 from SRC.image.imageCapture import Camera
-from SRC.image.imageEditor import makeVarients,modifyOriginals
 import numpy as np
-import SRC.image.imageLoader as IL
 import SRC.image.imageSaver as IS
 import cv2 as cv
 
-modifyOriginals()
-
 # make an instance of camera
 Camera = Camera(0)
+faces = []
+label = "David" #chooses label
 
 while True:
   pic = Camera.readCam()
   if cv.waitKey(10) == 32:
-    BGRface = Camera.processFace(pic)
+    BGRface = Camera.processFace(pic,False)
     if type(BGRface) == np.ndarray:
         # save original face
-        RGBface = cv.cvtColor(BGRface, cv.COLOR_BGR2RGB)
-        print("This is the shape of the face picture: ", RGBface.shape)
-        IS.saveImage([RGBface],"Christoffer",False)
+        faces.append(cv.cvtColor(BGRface, cv.COLOR_BGR2RGB))
+  if(len(faces) > 100):
+    IS.saveImage(faces,label,False)
+    faces = []
   if cv.waitKey(10) == 27:
     break
+
+IS.saveImage(faces,label,False)

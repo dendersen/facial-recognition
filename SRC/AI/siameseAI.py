@@ -1,3 +1,4 @@
+from SRC.image.imageLoader import ProcessOther
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
 from tensorflow.keras.metrics import Precision, Recall
@@ -21,6 +22,7 @@ def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
   posPath = os.path.join('images\DataSiameseNetwork','positive')
   negPath = os.path.join('images\DataSiameseNetwork','negative')
   ancPath = os.path.join('images\DataSiameseNetwork','anchor')
+  tempOtherPath = "images\\modified\\forDataset"
   
   print('\n Removeing images from: '+ posPath)
   progbar = tf.keras.utils.Progbar(len(os.listdir(posPath))-1)
@@ -32,7 +34,7 @@ def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
       os.remove(file)
       i = i+1
       progbar.update(i)
-
+#TODO use IE.clearPath
   print('\n Removeing images from: '+ negPath)
   progbar = tf.keras.utils.Progbar(len(os.listdir(negPath))-1)
   i = 0
@@ -55,6 +57,22 @@ def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
       i = i+1
       progbar.update(i)
   
+  # Get exstra negative data, from Untar Labelled Faces in the Wild Dataset
+  if addFacesInTheWild:
+    # Uncompress Tar GZ Labelled faces in the wild
+    with tarfile.open('lfw.tgz', "r:gz") as tar:
+      print('\n Adding exstra images to: '+ tempOtherPath +' : From Untar Labelled Faces in the Wild Dataset')
+      progbar = tf.keras.utils.Progbar(len(tar.getmembers()))
+      i = 0
+      # Move LFW Images to the following repository data/negative
+      for member in tar.getmembers():
+        i = i+1
+        progbar.update(i)
+        if member.name.endswith(".jpg") or member.name.endswith(".png"):
+          member.name = os.path.basename(member.name)
+          tar.extract(member, tempOtherPath)
+  ProcessOther()
+  
   print('\n Adding images to: '+ negPath +' : from: images\modified\Other')
   progbar = tf.keras.utils.Progbar(len(os.listdir('images\modified\Other'))-1)
   i = 0
@@ -67,23 +85,6 @@ def rewriteDataToMatchNetwork(person: str, addFacesInTheWild: bool = False):
       cv.imwrite(newPath, img)
       i = i+1
       progbar.update(i)
-  
-  
-  # Get exstra negative data, from Untar Labelled Faces in the Wild Dataset
-  if addFacesInTheWild:
-    # Uncompress Tar GZ Labelled faces in the wild
-    with tarfile.open('lfw.tgz', "r:gz") as tar:
-      print('\n Adding exstra images to: '+ negPath +' : From Untar Labelled Faces in the Wild Dataset')
-      progbar = tf.keras.utils.Progbar(len(tar.getmembers()))
-      i = 0
-      # Move LFW Images to the following repository data/negative
-      for member in tar.getmembers():
-        i = i+1
-        progbar.update(i)
-        if member.name.endswith(".jpg") or member.name.endswith(".png"):
-          member.name = os.path.basename(member.name)
-          tar.extract(member, negPath)
-  
   
   # Get all anchor data and positive data
   datapath = os.path.join('images/modified/', person)

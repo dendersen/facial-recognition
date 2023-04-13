@@ -24,7 +24,7 @@ class Camera:
   def close(self):
     self.cameraDevice.release()
   
-  def processFace(self, frame) -> List[List[List[int]]]:
+  def processFace(self, frame,info:bool = True) -> List[List[List[int]]]:
     # get fram shape
     height, width, channel = frame.shape
     
@@ -35,12 +35,13 @@ class Camera:
     face, probs = mtcnn.detect(frame)
     
     if type(face) != np.ndarray:
-      print("there is no face!")
+      if info:
+        print("there is no face!")
     else:
-      xLeft = int(min(face[0][0], face[0][2]))-30
-      xRight = int(max(face[0][0], face[0][2]))+30
-      yBottom = int(min(face[0][1], face[0][3]))-30
-      yTop = int(max(face[0][1], face[0][3]))+30
+      xLeft = int(min(face[0][0], face[0][2]))
+      xRight = int(max(face[0][0], face[0][2]))
+      yBottom = int(min(face[0][1], face[0][3]))
+      yTop = int(max(face[0][1], face[0][3]))
       
       faceWidth = xRight-xLeft
       faceHeight = yTop-yBottom
@@ -55,10 +56,12 @@ class Camera:
       yBottom = int((yBottom-ydif)-(total/4))
       yTop = int((yTop+ydif)+(total/4))
       
-      if xLeft < 0 or xRight > width or yBottom < 0 or yTop > height:
-        print('ERROR! Face not in frame, please move to center')
+      if (xLeft < 0 or xRight > width or yBottom < 0 or yTop > height):
+        if info:
+          print('ERROR! Face not in frame, please move to center')
       else:
         buff2 = frame[yBottom:yTop, xLeft:xRight]
-        print("We found that there is: " + str(probs[0]) + "% that it is a face")
-        cv.imshow('This is the face', buff2)
+        if(info):
+          print("We found that there is: " + str(probs[0]) + "% that it is a face")
+        # cv.imshow('This is the face', buff2)
         return buff2

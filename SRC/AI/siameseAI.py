@@ -246,7 +246,7 @@ def showSiameseBatch(testInput,testVal,yTrue,yHat, person):
   plt.show()
 
 class SiameseNeuralNetwork:
-  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, varients:int = 4, trainDataSize: float = 0.7, bachSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False):
+  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, bachSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False):
     self.person: str = person
     
     if self.person == "Christoffer":
@@ -264,7 +264,7 @@ class SiameseNeuralNetwork:
     
     # Optimizer and loss
     self.lossObject = tf.losses.BinaryCrossentropy(from_logits=True)
-    self.optimizer = tf.keras.optimizers.Adam(1e-4)
+    self.optimizer = tf.keras.optimizers.Adam(learning_rate)
     
     # Get data from files
     (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=bachSize)

@@ -1,3 +1,4 @@
+from typing import List
 from SRC.image.imageCapture import Camera
 import numpy as np
 import SRC.image.imageSaver as IS
@@ -13,7 +14,7 @@ def getValidLabel(msg:str = "please choose a label: ")->str:
     print("valid labels",end=": ")
     print(["Christoffer","David","Niels","Other"])
 
-faces:list[list[list[list[int]]]]=None; camera=None; label:str=None; waitTime:int=None; overide:bool=None; pic:list[list[list[int]]]=None; Time:int=None; captureTime:int=None; saveAmount:int=None; useTimer:bool=None
+faces:List[List[List[List[int]]]]=None; camera=None; label:str=None; waitTime:int=None; overide:bool=None; pic:List[List[List[int]]]=None; Time:int=None; captureTime:int=None; saveAmount:int=None; useTimer:bool=None
 
 def init():
   global faces, camera, label, waitTime, overide, pic, Time, captureTime, saveAmount, useTimer

@@ -1,3 +1,4 @@
+from typing import List
 from SRC.image.imageEditor import clearPath, modifyOriginals
 from SRC.image.imageLoader import ProcessOther
 from tensorflow.keras.models import Model
@@ -281,7 +282,7 @@ class SiameseNeuralNetwork:
     # Gives a summary of the network
     self.siameseNetwork.summary()
   
-  def train(self, EPOCHS: int = 10) -> list[list[float],list[float],list[float]]:
+  def train(self, EPOCHS: int = 10) -> List[List[float]]:
     # Keep results for plotting
     trainLossResults = []
     trainAccuracyResults = []

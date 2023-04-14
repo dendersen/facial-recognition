@@ -11,7 +11,7 @@ def getValidLabel(msg:str = "please choose a label: ")->str:
       return label
     print("not a valid label")
     print("valid labels",end=": ")
-    print(["Christoffer","David","Niels","Other","Temp"])
+    print(["Christoffer","David","Niels","Other"])
 
 faces:list[list[list[list[int]]]]=None; camera=None; label:str=None; waitTime:int=None; overide:bool=None; pic:list[list[list[int]]]=None; Time:int=None; captureTime:int=None; saveAmount:int=None; useTimer:bool=None
 
@@ -24,8 +24,8 @@ def init():
   waitTime = 1 #smaller alows more pictures, higher makes keybord less responsive
   overide = True
   pic = []
-  useTimer = False
-  captureTime = 1000
+  useTimer = True
+  captureTime = 5000
   saveAmount = 100
   Time = int(time()*1000)
 
@@ -50,7 +50,7 @@ def run():
       if(len(faces) >= saveAmount):
         IS.saveImage(faces,label,False)
         faces = []
-    if cv.waitKey(waitTime*10) == 27:
+    if cv.waitKey(captureTime) == 27:
       return
     Time = int(time()*1000)
 

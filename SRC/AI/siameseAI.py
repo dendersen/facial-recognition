@@ -281,7 +281,7 @@ class SiameseNeuralNetwork:
     # Gives a summary of the network
     self.siameseNetwork.summary()
   
-  def train(self, EPOCHS: int = 10):
+  def train(self, EPOCHS: int = 10) -> list[list[float],list[float],list[float]]:
     # Keep results for plotting
     trainLossResults = []
     trainAccuracyResults = []
@@ -383,6 +383,7 @@ class SiameseNeuralNetwork:
     
     # Replace the old model with the new trained one
     self.siameseNetwork.save('siamesemodel'+self.personName+'.h5')
+    return [trainLossResults,testAccuracyResults,trainAccuracyResults]
   
   # Makes some predictions on some data and outputs how sure it was
   def makeAPredictionOnABatch(self):

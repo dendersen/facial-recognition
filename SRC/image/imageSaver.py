@@ -11,12 +11,17 @@ def saveImage(img:Union[List[Image.Image], List[List[List[List[int]]]],Image.Ima
       label (str): the subject of the image
       ID (int, optional): the first ID to be searched for in the search for the next ID, if this is too high all ID's under it will result NULL if this is low it will search for a long time to find an open ID. Defaults to 0.
   """
-  
+  if(type(img) == type(None)):
+    return
   if type(img) == Image.Image:
     img = [img]
-  elif(type(img[0]) != Image.Image):
-    for i in range(0,len(img)):
-      img[i] = arrToPIL(img[i])
+  elif(len(img)>0 and type(img[0]) != Image.Image):
+    temp:list[Image.Image] = []
+    for i in img:
+      temp.append(arrToPIL(i))
+    img = temp
+  else:
+    return
   img:list[Image.Image]
   
   path:str = ""

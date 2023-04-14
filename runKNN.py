@@ -29,7 +29,7 @@ def takeInput(msg:str)->int:
 def getValidLabel(msg:str)->str:
   while(True):
     label = input(msg).capitalize()
-    if(["Christoffer","David","Niels","Other"].__contains__(label)):
+    if(["Christoffer","David","Niels","Other","Temp"].__contains__(label)):
       return label
     print("not a valid label")
 

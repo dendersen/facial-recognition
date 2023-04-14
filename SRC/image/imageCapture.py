@@ -7,8 +7,11 @@ from typing import List
 class Camera:
   def __init__(self,cameraDevice:int) -> None:
     self.cameraDevice = cv.VideoCapture(cameraDevice)
+    # Makes the face detector
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    self.mtcnn = MTCNN(min_face_size=120, select_largest=True, device=device)
   
-  def readCam(self)->List[List[int]]:
+  def readCam(self,show:bool = True)->List[List[int]]:
     #-- 2. Read the video stream
     if not self.cameraDevice.isOpened:
       print('--(!)Error opening video capture')
@@ -18,21 +21,19 @@ class Camera:
     if frame is None:
       print('--(!) No captured frame -- Break!')
       return
-    cv.imshow('Cam output: ', frame)
+    if(show):
+      cv.imshow('Cam output: ', frame)
     return frame
   
   def close(self):
     self.cameraDevice.release()
   
-  def processFace(self, frame,info:bool = True) -> List[List[List[int]]]:
+  def processFace(self, frame,info:bool = True,show:bool = False) -> List[List[List[int]]]:
     # get fram shape
     height, width, channel = frame.shape
     
-    # Makes the face detector
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    mtcnn = MTCNN(min_face_size=120, select_largest=True, device=device)
     # prdict face
-    face, probs = mtcnn.detect(frame)
+    face, probs = self.mtcnn.detect(frame)
     
     if type(face) != np.ndarray:
       if info:
@@ -63,5 +64,6 @@ class Camera:
         buff2 = frame[yBottom:yTop, xLeft:xRight]
         if(info):
           print("We found that there is: " + str(probs[0]) + "% that it is a face")
-        # cv.imshow('This is the face', buff2)
+        if(show):
+          cv.imshow('This is the face', buff2)
         return buff2

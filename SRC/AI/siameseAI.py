@@ -1,20 +1,21 @@
+import os
+import tarfile
+import random
+import math
 from typing import List
+
+import cv2 as cv
+import numpy as np
+import tensorflow as tf
+from matplotlib import pyplot as plt
+
 from SRC.image.imageEditor import clearPath, modifyOriginals
 from SRC.image.imageLoader import ProcessOther
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
 from tensorflow.keras.metrics import Precision, Recall
-import tensorflow as tf
-import os
-import cv2 as cv
-from matplotlib import pyplot as plt
-import numpy as np
-import math
-import tarfile
-import random
 
-# Avoid out of out of memmory errors by setting GPU Memory Consumption Growth
-# Avoid OOM errors by setting GPU Memory Consumption Growth
+# Avoid out of memory errors by setting GPU Memory Consumption Growth
 gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus: 
   tf.config.experimental.set_memory_growth(gpu, True)
@@ -34,7 +35,7 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
     clearPath(tempOtherPath)
     # Uncompress Tar GZ Labelled faces in the wild
     with tarfile.open('lfw.tgz', "r:gz") as tar:
-      print('\n Adding exstra images to: '+ tempOtherPath +' : From Untar Labelled Faces in the Wild Dataset')
+      print(f'\n Adding extra images to: {tempOtherPath} : From Untar Labelled Faces in the Wild Dataset')
       progbar = tf.keras.utils.Progbar(len(tar.getmembers()))
       i = 0
       # Move LFW Images to the following repository data/negative
@@ -143,27 +144,27 @@ def buildData(loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int =
   return (trainData, testData)
 
 def makeImbedding():
-  inp = Input(shape=(100,100,3), name='inputImage')
+  input_image = Input(shape=(100, 100, 3), name='inputImage')
   
   # First block
-  c1 = Conv2D(64, (10,10), activation='relu')(inp)
-  m1 = MaxPooling2D(64, (2,2), padding='same')(c1)
+  conv1 = Conv2D(64, (10, 10), activation='relu')(input_image)
+  maxpool1 = MaxPooling2D(64, (2, 2), padding='same')(conv1)
   
   # Second block
-  c2 = Conv2D(128, (7,7), activation='relu')(m1)
-  m2 = MaxPooling2D(64, (2,2), padding='same')(c2)
+  conv2 = Conv2D(128, (7, 7), activation='relu')(maxpool1)
+  maxpool2 = MaxPooling2D(64, (2, 2), padding='same')(conv2)
   
-  # Third block 
-  c3 = Conv2D(128, (4,4), activation='relu')(m2)
-  m3 = MaxPooling2D(64, (2,2), padding='same')(c3)
+  # Third block
+  conv3 = Conv2D(128, (4, 4), activation='relu')(maxpool2)
+  maxpool3 = MaxPooling2D(64, (2, 2), padding='same')(conv3)
   
   # Final embedding block
-  c4 = Conv2D(256, (4,4), activation='relu')(m3)
-  f1 = Flatten()(c4)
-  d1 = Dense(4096, activation='sigmoid')(f1)
+  conv4 = Conv2D(256, (4, 4), activation='relu')(maxpool3)
+  flat1 = Flatten()(conv4)
+  dense1 = Dense(4096, activation='sigmoid')(flat1)
   
-  
-  return Model(inputs=[inp], outputs=[d1], name='embedding')
+  return Model(inputs=[input_image], outputs=[dense1], name='embedding')
+
 class L1Dist(Layer):
   
   def __init__(self, **kwargs):
@@ -222,32 +223,31 @@ def verify(siameseNetwork, detectionThreshold: float = 0.5, verificationThreshol
   
   return results, verified
 
-def showSiameseBatch(testInput,testVal,yTrue,yHat, person):
-  
-  inputTmages = testInput
+def showSiameseBatch(testInput, testVal, yTrue, yHat, person):
+  inputImages = testInput
   testImages = testVal
-  
-  height = math.ceil((len(inputTmages)+len(testImages))/4)
-  fig, axs = plt.subplots(4, height, figsize=(16,18))
+
+  height = math.ceil((len(inputImages) + len(testImages)) / 4)
+  fig, axs = plt.subplots(4, height, figsize=(16, 18))
   indexInput = 0
   indexTest = 0
-  fig.suptitle("The person we are looking at is: "+person+" : The first row shows what should be guessed, the second shows the guess", fontsize=14, fontweight='bold')
+  fig.suptitle(f"The person we are looking at is: {person} : The first row shows what should be guessed, the second shows the guess", fontsize=14, fontweight='bold')
   for i in range(4):
     for j in range(height):
-      if i%2 == 0:
-        axs[i,j].imshow(inputTmages[indexInput])
-        axs[i,j].set_title(str(yTrue[indexInput]))
-        axs[i,j].axis("off")
-        indexInput = indexInput+1
+      if i % 2 == 0:
+        axs[i, j].imshow(inputImages[indexInput])
+        axs[i, j].set_title(str(yTrue[indexInput]))
+        axs[i, j].axis("off")
+        indexInput = indexInput + 1
       else:
-        axs[i,j].imshow(testImages[indexTest])
-        axs[i,j].set_title(str(round(yHat[indexTest][0],4)))
-        axs[i,j].axis("off")
-        indexTest = indexTest+1
+        axs[i, j].imshow(testImages[indexTest])
+        axs[i, j].set_title(str(round(yHat[indexTest][0], 4)))
+        axs[i, j].axis("off")
+        indexTest = indexTest + 1
   plt.show()
 
 class SiameseNeuralNetwork:
-  def __init__(self, person: str = "Christoffer", loadAmount: int = 300, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, bachSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False):
+  def __init__(self, person: str = "Christoffer", loadAmount: int = 1000, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, batchSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False):
     self.person: str = person
     
     if self.person == "Christoffer":
@@ -257,10 +257,8 @@ class SiameseNeuralNetwork:
     
     if(not useDataset):
       clearPath("images\modified\Other")
-    modifyOriginals(loadAmount,varients)
+    modifyOriginals(6000,varients) # Used to be loadAmount, but chaged it as we want to make as many as posible
     
-    # Make new loadamount
-    loadAmount = int(math.floor(loadAmount*varients/2))
     rewriteDataToMatchNetwork(person=self.person, reprocessDataset = reprocessDataset)
     
     # Optimizer and loss
@@ -268,16 +266,17 @@ class SiameseNeuralNetwork:
     self.optimizer = tf.keras.optimizers.Adam(learning_rate)
     
     # Get data from files
-    (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=bachSize)
-    
+    (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=batchSize)
+    self.trainingData = self.trainingData.prefetch(tf.data.experimental.AUTOTUNE)
+    self.testData = self.testData.prefetch(tf.data.experimental.AUTOTUNE)
     # # Get a batch of test data
     # testInput, testVal, yTrue = testData.as_numpy_iterator().next()
     if resetNetwork:
       self.siameseNetwork = makeSiameseModel()
     else:
       # Reload model 
-      self.siameseNetwork = tf.keras.models.load_model("siamesemodel"+self.personName+".h5", 
-                                        custom_objects={'L1Dist':L1Dist, 'BinaryCrossentropy':tf.losses.BinaryCrossentropy})
+      self.siameseNetwork = tf.keras.models.load_model("siamesemodel" + self.personName,
+                                                  custom_objects={'L1Dist': L1Dist, 'BinaryCrossentropy': tf.losses.BinaryCrossentropy})
     
     # Gives a summary of the network
     self.siameseNetwork.summary()
@@ -289,6 +288,7 @@ class SiameseNeuralNetwork:
     testAccuracyResults = []
     
     # loss funktion
+    @tf.function
     def loss(images, labels, training):
       # training=training is needed only if there are layers with different
       # behavior during training versus inference (e.g. Dropout).
@@ -311,10 +311,6 @@ class SiameseNeuralNetwork:
         
       return lossValue, tape.gradient(lossValue, self.siameseNetwork.trainable_variables)
     
-    # checkpointDir = './training_checkpoints'
-    # checkpointPrefix = os.path.join(checkpointDir, 'ckpt')
-    # checkpoint = tf.train.Checkpoint(opt=self.optimizer, siameseNetwork=self.siameseNetwork)
-    
     # loop through epochs
     for epoch in range(EPOCHS):
       
@@ -324,10 +320,6 @@ class SiameseNeuralNetwork:
       
       print('\n Epoch {}/{}'.format(epoch+1,EPOCHS))
       progbar = tf.keras.utils.Progbar(len(self.trainingData))
-      
-      # # Creating a metric object 
-      # r = Recall()
-      # p = Precision()
       
       # Loop through each batch
       for idx, batch in enumerate(self.trainingData):
@@ -343,16 +335,16 @@ class SiameseNeuralNetwork:
         X = batch[:2]
         y = batch[2]
         epochAccuracy.update_state(y, self.siameseNetwork(X, training=True))
-        #Update progbar
+        # Update progbar
         progbar.update(idx+1)
       
-      for idx, batch in enumerate(self.testData):
+      for batch in self.testData:
         X = batch[:2]
         y = batch[2]
         # Test the mode on the test data
         # training=False is needed only if there are layers with different
         # behavior during training versus inference (e.g. Dropout).
-        testepochAccuracy.update_state(y,self.siameseNetwork(X,training = False))
+        testepochAccuracy.update_state(y, self.siameseNetwork(X, training=False))
       
       # End epoch
       trainLossResults.append(epochLossAvg.result())
@@ -360,13 +352,10 @@ class SiameseNeuralNetwork:
       testAccuracyResults.append(testepochAccuracy.result())
       
       if epoch % 1 == 0:
-        # Save checkpoints
-        # checkpoint.save(file_prefix=checkpointPrefix)
-        
         print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}, Test accuracy: {:.3%}".format(epoch,
-                                                                    epochLossAvg.result(),
-                                                                    epochAccuracy.result(),
-                                                                    testepochAccuracy.result()))
+                                                                      epochLossAvg.result(),
+                                                                      epochAccuracy.result(),
+                                                                      testepochAccuracy.result()))
     
     # Show how the training went
     fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
@@ -383,7 +372,7 @@ class SiameseNeuralNetwork:
     plt.show()
     
     # Replace the old model with the new trained one
-    self.siameseNetwork.save('siamesemodel'+self.personName+'.h5')
+    self.siameseNetwork.save('siamesemodel' + self.personName, save_format='tf')
     return [trainLossResults,testAccuracyResults,trainAccuracyResults]
   
   # Makes some predictions on some data and outputs how sure it was

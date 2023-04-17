@@ -1,6 +1,7 @@
-training_checkpoints/
+siamesemodelChris
+siamesemodelDavid
+siamesemodelNiels
 test.py
 **.pyc
-**.h5
 **.tgz
 /__pycache__/

@@ -64,6 +64,10 @@ def clearPath(path:str):
         pass
 
 def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
+  clearPath('images\\modified\\Christoffer')
+  clearPath('images\\modified\\Niels')
+  clearPath('images\\modified\\David')
+  
   IDChris = 0
   IDDavid = 0
   IDNiels = 0

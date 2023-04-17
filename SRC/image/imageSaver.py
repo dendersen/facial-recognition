@@ -15,12 +15,12 @@ def saveImage(img:Union[List[Image.Image], List[List[List[List[int]]]],Image.Ima
     return
   if type(img) == Image.Image:
     img = [img]
-  elif(len(img)>0 and type(img[0]) != Image.Image):
+  elif(len(img) > 0 and type(img[0]) != Image.Image):
     temp:list[Image.Image] = []
     for i in img:
       temp.append(arrToPIL(i))
     img = temp
-  else:
+  elif(len(img) == 0):
     return
   img:list[Image.Image]
   

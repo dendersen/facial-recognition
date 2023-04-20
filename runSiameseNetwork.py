@@ -41,6 +41,7 @@ Network = SiameseNeuralNetwork(
   useDataset = True,
   resetNetwork = True
 )
+
 saveData(*Network.train(1),label)
 modelAcc(label)
 Network.makeAPredictionOnABatch()

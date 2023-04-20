@@ -108,7 +108,7 @@ def sharpen(pic:List[List[List[int]]], strength:float = 0.2,threshold = -1, show
   return pic
 
 def smooth(pic:List[List[List[int]]],threshold = -1,strong:float = 1.0,central:float = 1.0) -> List[List[List[int]]]:
-  orgPic = cv.cvtColor(pic, cv.COLOR_BGR2HSV)
+  orgPic = pic.copy()
   tempList = orgPic.copy()
   for y in range(len(pic)-2):
     for x in range(len(pic[y])-2):
@@ -126,18 +126,18 @@ def smooth(pic:List[List[List[int]]],threshold = -1,strong:float = 1.0,central:f
         )/(central+8*strong))*255)
         if(abs(int(tempList[y][x][col]) - int(orgPic[y][x][col])) < threshold):
           tempList[y][x][col] = orgPic[y][x][col]
-  return cv.cvtColor(tempList, cv.COLOR_HSV2BGR)
+  return tempList
 
 def difference(pic1:List[List[List[int]]],pic2:List[List[List[int]]]) -> List[List[List[int]]]:
-  tempPic1 = cv.cvtColor(pic1, cv.COLOR_BGR2HSV)
-  tempPic2 = cv.cvtColor(pic2, cv.COLOR_BGR2HSV)
+  tempPic1 = cv.cvtColor(pic1, cv.COLOR_BGR2RGB)
+  tempPic2 = cv.cvtColor(pic2, cv.COLOR_BGR2RGB)
   for ny,ty in zip(range(len(tempPic1)),range(len(tempPic2))):
     for nx,tx in zip(range(len(tempPic1[ny])),range(len(tempPic2[ty]))):
       tempPic1[ty][tx][0] = int(abs(int(tempPic1[ty][tx][0]) - int(tempPic2[ny][nx][0])))
       tempPic1[ty][tx][1] = int(abs(int(tempPic1[ty][tx][1]) - int(tempPic2[ny][nx][1])))
       tempPic1[ty][tx][2] = int(abs(int(tempPic1[ty][tx][2]) - int(tempPic2[ny][nx][2])))
   
-  return cv.cvtColor(tempPic1, cv.COLOR_HSV2BGR)
+  return cv.cvtColor(tempPic1, cv.COLOR_RGB2BGR)
 
 def combine(pic1:List[List[List[int]]],pic2:List[List[List[int]]], strength:float, threshold = 0) -> List[List[List[int]]]:
   tempPic1 = pic1

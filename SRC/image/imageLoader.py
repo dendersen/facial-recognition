@@ -29,7 +29,6 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:List[str] = ["Christoffer",
   outgoingLabels:list[str] = []
 
   if (linearLoad and alowOriginals):
-  if (linearLoad and alowOriginals):
     for label in labels:
       path:str = "images/original/" + label  + "/"
       for ID in range(0,maxVolume):
@@ -54,7 +53,6 @@ def loadImages(maxVolume:int, linearLoad:bool,labels:List[str] = ["Christoffer",
           except:
             break
 
-  if((not linearLoad) and alowOriginals):
   if((not linearLoad) and alowOriginals):
     for label in labels:
       path:str = "images/original/" + label  + "/"

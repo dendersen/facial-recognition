@@ -1,4 +1,5 @@
 from math import floor
+from typing import List, Tuple
 import cv2 as cv
 import numpy as np
 from SRC.AI.knn.knn import Knn
@@ -9,10 +10,10 @@ from SRC.image.imageCapture import Cam
 import SRC.image.imageLoader as IL
 # import SRC.image.imageSaver as IS
 
-def makePoint(thing: tuple[list[list[list[int]]],str]) -> Point:
+def makePoint(thing: Tuple[List[List[List[int]]],str]) -> Point:
   return Point([color for x in thing[0] for y in x for color in y],thing[1])
 
-def makePoints(things: list[tuple[list[list[list[int]]],str]]):
+def makePoints(things: List[Tuple[List[List[List[int]]],str]]):
   points:list[Point] = []
   for thing in things:
     points.append(makePoint(thing))
@@ -30,7 +31,6 @@ def getValidLabel(msg:str)->str:
   while(True):
     label = input(msg).capitalize()
     if(["Christoffer","David","Niels","Other","Temp"].__contains__(label)):
-    if(["Christoffer","David","Niels","Other"].__contains__(label)):
       return label
     print("not a valid label")
 

@@ -105,7 +105,7 @@ def sharpen(pic:List[List[List[int]]], strength:float = 0.2,threshold = -1, show
   pic = combine(pic,process,strength,threshold)
   if(showEnd):
     cv.imshow('sharp output: ',cv.convertScaleAbs(np.array(pic)))
-  return pic
+  return cv.convertScaleAbs(np.array(pic))
 
 def smooth(pic:List[List[List[int]]],threshold = -1,strong:float = 1.0,central:float = 1.0) -> List[List[List[int]]]:
   orgPic = pic.copy()

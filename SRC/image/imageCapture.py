@@ -11,7 +11,7 @@ class Camera:
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     self.mtcnn = MTCNN(min_face_size=120, select_largest=True, device=device)
   
-  def readCam(self,show:bool = True)->List[List[int]]:
+  def readCam(self,show:bool = True)->List[List[List[int]]]:
     #-- 2. Read the video stream
     if not self.cameraDevice.isOpened:
       print('--(!)Error opening video capture')

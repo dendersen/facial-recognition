@@ -13,19 +13,7 @@ import PIL
 import os
 import os.path
 
-from SRC.image.imageCapture import Cam
-
-class tensorflowModels:
-  def __init__(self) -> None:
-    # self.vggface = VGGFace(model='vgg16')
-    # self.vggfaceResnet = VGGFace(model='resnet50')
-    # self.vggfaceSenet = VGGFace(model='senet50')
-    
-    # # Print downloaded weights, input, and output
-    # print(self.vggface.summary())
-    # print('Inputs are: ', self.vggface.inputs)
-    # print('Outputs are: ', self.vggface.outputs)
-    pass
+from SRC.image.imageCapture import Camera
 
 class AI:
   def __init__(self):
@@ -38,7 +26,7 @@ class AI:
     self.faceCascadeName = args.faceCascade
     self.eyesCascadeName = args.eyesCascade
     self.cameraDevice = args.camera
-    self.camera = Cam(self.cameraDevice)
+    self.camera = Camera(self.cameraDevice)
     self.faceCascade = cv.CascadeClassifier()
     self.eyesCascade = cv.CascadeClassifier()
     

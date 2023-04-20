@@ -1,8 +1,9 @@
 from typing import Union
 from PIL import Image
+from typing import List, Tuple
 
 extension:str = ".jpg"
-def saveImage(img:Union[list[Image.Image], list[list[list[list[int]]]],Image.Image], label:str, modified:bool ,ID:int = 0,forceID:bool = False) -> None:
+def saveImage(img:Union[List[Image.Image], List[List[List[List[int]]]],Image.Image], label:str, modified:bool ,ID:int = 0,forceID:bool = False) -> None:
   """saves an image to the correct location based on it's label
   
   Args:
@@ -10,12 +11,17 @@ def saveImage(img:Union[list[Image.Image], list[list[list[list[int]]]],Image.Ima
       label (str): the subject of the image
       ID (int, optional): the first ID to be searched for in the search for the next ID, if this is too high all ID's under it will result NULL if this is low it will search for a long time to find an open ID. Defaults to 0.
   """
-  
+  if(type(img) == type(None)):
+    return
   if type(img) == Image.Image:
     img = [img]
-  elif(type(img[0]) != Image.Image):
-    for i in range(0,len(img)):
-      img[i] = arrToPIL(img[i])
+  elif(len(img) > 0 and type(img[0]) != Image.Image):
+    temp:list[Image.Image] = []
+    for i in img:
+      temp.append(arrToPIL(i))
+    img = temp
+  elif(len(img) == 0):
+    return
   img:list[Image.Image]
   
   path:str = ""
@@ -30,6 +36,9 @@ def saveImage(img:Union[list[Image.Image], list[list[list[list[int]]]],Image.Ima
     image = imageScale(image,modified)
     image.save(path + str(ID) + ".jpg")
     ID += 1
+  
+  if(len(img) > 5):
+    print(f"{len(img)} images where saved")
   
   return
 
@@ -63,9 +72,9 @@ def imageScale(img:Image.Image, isModified:bool, desiredWidth:int = 100, desired
       Image.Image: the scaled image
   """
   if not isModified:
-    return img.resize(120,120)
+    return img.resize((120,120))
   else:
     return img.resize((100,100))
 
-def arrToPIL(img: list[list[list[int]]]):
+def arrToPIL(img: List[List[List[int]]]):
   return Image.fromarray(img)

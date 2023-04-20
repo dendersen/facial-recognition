@@ -1,0 +1,1 @@
+this folder contains .csv files that describe the growth of of an AI training

@@ -1,3 +1,3 @@
 image Label
 naming:
-ID + ".png"
+ID + ".jpg"

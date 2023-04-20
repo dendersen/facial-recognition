@@ -1,2 +1,9 @@
+siamesemodelChris
+siamesemodelDavid
+siamesemodelNiels
+test.py
+**.pyc
+**.tgz
+/__pycache__/
 test.py
 **.pyc

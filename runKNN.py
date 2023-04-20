@@ -4,7 +4,7 @@ import numpy as np
 from SRC.AI.knn.knn import Knn
 from SRC.AI.knn.point import Point
 from SRC.image.imageCapture import Camera
-
+from SRC.image.imageCapture import Cam
 # from SRC.image.imageEditor import makeVarients
 import SRC.image.imageLoader as IL
 # import SRC.image.imageSaver as IS
@@ -30,6 +30,7 @@ def getValidLabel(msg:str)->str:
   while(True):
     label = input(msg).capitalize()
     if(["Christoffer","David","Niels","Other","Temp"].__contains__(label)):
+    if(["Christoffer","David","Niels","Other"].__contains__(label)):
       return label
     print("not a valid label")
 

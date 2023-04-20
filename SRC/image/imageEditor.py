@@ -95,11 +95,11 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
   if(dataset):
     ProcessOther()
 
-def sharpen(pic:List[List[List[int]]], strength:float = 0.2,threshold = -1, showSteps:bool = False, showEnd:bool = False):
+def sharpen(pic:List[List[List[int]]], strength:float = 0.2,threshold = -1, showSteps:bool = False, showEnd:bool = False, amplification:float = 1):
   process = smooth(pic,threshold)
   if(showSteps):
     cv.imshow('smooth output: ',cv.convertScaleAbs(np.array(process)))
-  process = difference(pic,process)
+  process = difference(pic,process,amplification)
   if(showSteps):
     cv.imshow('detail output: ',cv.convertScaleAbs(np.array(process)))
   pic = combine(pic,process,strength,threshold)
@@ -128,14 +128,14 @@ def smooth(pic:List[List[List[int]]],threshold = -1,strong:float = 1.0,central:f
           tempList[y][x][col] = orgPic[y][x][col]
   return tempList
 
-def difference(pic1:List[List[List[int]]],pic2:List[List[List[int]]]) -> List[List[List[int]]]:
+def difference(pic1:List[List[List[int]]],pic2:List[List[List[int]]],amplification:float = 1) -> List[List[List[int]]]:
   tempPic1 = cv.cvtColor(pic1, cv.COLOR_BGR2RGB)
   tempPic2 = cv.cvtColor(pic2, cv.COLOR_BGR2RGB)
   for ny,ty in zip(range(len(tempPic1)),range(len(tempPic2))):
     for nx,tx in zip(range(len(tempPic1[ny])),range(len(tempPic2[ty]))):
-      tempPic1[ty][tx][0] = int(abs(int(tempPic1[ty][tx][0]) - int(tempPic2[ny][nx][0])))
-      tempPic1[ty][tx][1] = int(abs(int(tempPic1[ty][tx][1]) - int(tempPic2[ny][nx][1])))
-      tempPic1[ty][tx][2] = int(abs(int(tempPic1[ty][tx][2]) - int(tempPic2[ny][nx][2])))
+      tempPic1[ty][tx][0] = min(int(abs(int(tempPic1[ty][tx][0]) - int(tempPic2[ny][nx][0])*amplification)),255)
+      tempPic1[ty][tx][1] = min(int(abs(int(tempPic1[ty][tx][1]) - int(tempPic2[ny][nx][1])*amplification)),255)
+      tempPic1[ty][tx][2] = min(int(abs(int(tempPic1[ty][tx][2]) - int(tempPic2[ny][nx][2])*amplification)),255)
   
   return cv.cvtColor(tempPic1, cv.COLOR_RGB2BGR)
 

@@ -6,13 +6,15 @@ from time import time
 
 images = []
 tim  = time()
-allItems = loadImgAsArr(10,False,cropOri=True)
+allItems = loadImgAsArr(10,False,cropOri=False)
 for i,img in enumerate(allItems):
   pic = img[0]
-  pic = sharpen(pic,threshold=5,showSteps=False,strength=1.2,amplification = 1.03)#keep amplification as low as possible!! or the original image will shine through, can be mitigated with threshold
+  pic = sharpen(pic,threshold=5,showSteps=False,strength=0.9,amplification = 1.07)#keep amplification as low as possible!! or the original image will shine through, can be mitigated with threshold
   printProgressBar(i,len(allItems),tim)
   images.append(pic)
 print("\r" + (" "*100) + "\rdone")
+
+
 
 # size = int(math.ceil(math.sqrt(len(images))))
 for i, image in enumerate(zip(images,allItems)):

@@ -130,61 +130,47 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
 
     ProcessOther()
 
-def sharpen(pic:List[List[List[int]]], strength:float = 0.2,threshold = -1, showSteps:bool = False, showEnd:bool = False, amplification:float = 1):
-  process = smooth(pic,threshold)
-  if(showSteps):
-    cv.imshow('smooth output: ',cv.convertScaleAbs(np.array(process)))
-  process = difference(pic,process,amplification)
-  if(showSteps):
-    cv.imshow('detail output: ',cv.convertScaleAbs(cv.multiply(np.array(process).copy(),np.ones_like(pic)*2)))
-  pic = combine(pic,process,strength,threshold)
-  if(showEnd):
-    cv.imshow('sharp output: ',cv.convertScaleAbs(np.array(pic)))
-  return cv.convertScaleAbs(np.array(pic))
+from typing import List
+import numpy as np
+import cv2 as cv
 
-def smooth(pic:List[List[List[int]]],threshold = -1,strong:float = 1.0,central:float = 1.0) -> List[List[List[int]]]:
+def sharpen(pic: List[List[List[int]]], strength: float = 0.2, threshold: int = -1, showSteps: bool = False, showEnd: bool = False, amplification: float = 1):
+    pic = np.array(pic)
+    process = smooth(pic, threshold)
+    if showSteps:
+        cv.imshow('smooth output:', cv.convertScaleAbs(process))
+
+    process = difference(pic, process, amplification)
+    if showSteps:
+        cv.imshow('detail output:', cv.convertScaleAbs(cv.multiply(process.copy(), np.ones_like(pic) * 2)))
+
+    pic = combine(pic, process, strength, threshold)
+    if showEnd:
+        cv.imshow('sharp output:', cv.convertScaleAbs(pic))
+
+    return cv.convertScaleAbs(pic)
+
+def smooth(pic, threshold: int = -1, strong: float = 1.0, central: float = 1.0):
   orgPic = pic.copy()
-  tempList = orgPic.copy()
-  for y in range(len(pic)-2):
-    for x in range(len(pic[y])-2):
-      for col in range(len(pic[y][x])):
-        tempList[y+1][x+1][col] = int(((
-          float(orgPic[y][x][col])/(255.0)*strong+
-          float(orgPic[y+1][x][col])/(255.0)*strong+
-          float(orgPic[y+2][x][col])/(255.0)*strong+
-          float(orgPic[y][x+1][col])/(255.0)*strong+
-          float(orgPic[y+1][x+1][col])/(255.0)*central+
-          float(orgPic[y+2][x+1][col])/(255.0)*strong+
-          float(orgPic[y][x+2][col])/(255.0)*strong+
-          float(orgPic[y+1][x+2][col])/(255.0)*strong+
-          float(orgPic[y+2][x+2][col])/(255.0)*strong
-        )/(central+8*strong))*255)
-        if(min(abs((float(tempList[y][x][col])+0.0001) / (float(orgPic[y][x][col])+0.0001)),abs((float(orgPic[y][x][col])+0.0001) / (float(tempList[y][x][col])+0.0001))) < float(threshold)/255.0):
-          tempList[y][x][col] = orgPic[y][x][col]
+  kernel = np.array([[strong, strong, strong],
+                      [strong, central, strong],
+                      [strong, strong, strong]]) / (central + 8 * strong)
+  tempList = cv.filter2D(orgPic, -1, kernel)
+  
+  if threshold > 0:
+    mask = np.abs(tempList - orgPic) < (threshold / 255.0)
+    tempList[mask] = orgPic[mask]
+
   return tempList
 
-def difference(pic1:List[List[List[int]]],pic2:List[List[List[int]]],amplification:float = 1) -> List[List[List[int]]]:
-  tempPic1 = pic1.copy()
-  tempPic2 = pic2.copy()
-  for ny,ty in zip(range(len(tempPic1)),range(len(tempPic2))):
-    for nx,tx in zip(range(len(tempPic1[ny])),range(len(tempPic2[ty]))):
-      for ncol,tcol in zip(range(len(tempPic1[ny][nx])),range(len(tempPic2[ty][tx]))):
-        tempPic1[ny][nx][ncol] = min(int(abs(int(tempPic1[ny][nx][ncol]) - int(tempPic2[ty][tx][tcol])*amplification)),255)
-  
-  return tempPic1
+def difference(pic1, pic2, amplification: float = 1):
+  return np.clip(np.abs(pic1.astype(np.float32) - pic2.astype(np.float32) * amplification), 0, 255).astype(np.uint8)
 
-def combine(pic1:List[List[List[int]]],pic2:List[List[List[int]]], strength:float, threshold = 0) -> List[List[List[int]]]:
-  tempPic1 = pic1.copy()
-  tempPic2 = pic2.copy()
-  for ny,ty in zip(range(len(tempPic1)),range(len(tempPic2))):
-    for nx,tx in zip(range(len(tempPic1[ny])),range(len(tempPic2[ty]))):
-      for ncol,tcol in zip(range(len(tempPic1[ny][nx])),range(len(tempPic2[ty][nx]))):
-        temp = abs(int(float(tempPic1[ty][tx][tcol])) + int(float(tempPic2[ny][nx][ncol])*strength))
-        if(temp <= 255 and temp >= threshold):
-          tempPic1[ty][tx][tcol] = temp
-        elif(temp > 255):
-          tempPic1[ty][tx][tcol] = 255
-        else:
-          tempPic1[ty][tx] = pic1[ty][tx]
-          continue
-  return tempPic1
+def combine(pic1, pic2, strength: float, threshold: int = 0):
+  temp = np.clip(pic1.astype(np.float32) + pic2.astype(np.float32) * strength, 0, 255).astype(np.uint8)
+  
+  if threshold > 0:
+    mask = temp < threshold
+    temp[mask] = pic1[mask]
+
+  return temp

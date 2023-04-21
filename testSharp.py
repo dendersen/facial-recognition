@@ -13,15 +13,15 @@ for i,img in enumerate(allItems):
   printProgressBar(i,len(allItems),tim)
   images.append(pic)
 print("\r" + (" "*100) + "\rdone")
-fig = plt.figure(dpi=300)
 
-size = int(math.ceil(math.sqrt(len(images))))
+# size = int(math.ceil(math.sqrt(len(images))))
 for i, image in enumerate(zip(images,allItems)):
-  fig.add_subplot(size,size*2,(i+1)*2)
+  fig = plt.figure(dpi=300)
+  fig.add_subplot(2,1,1)
   plt.imshow(image[0], cmap="gray")  
   plt.axis("off")
-  fig.add_subplot(size,size*2,(i+1)*2+1)
-  plt.imshow(image[1], cmap="gray")
+  fig.add_subplot(2,1,2)
+  plt.imshow(image[1][0], cmap="gray")
   plt.axis("off")
-plt.show()
+  plt.show()
 

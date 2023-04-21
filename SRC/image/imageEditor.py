@@ -1,13 +1,30 @@
 from SRC.image.imageSaver import saveImage
 from SRC.image.imageLoader import ProcessOther, loadImgAsArr
 from typing import List, Tuple
-import tensorflow as tf
+import sys
+import time
 import os
 import numpy as np
 import random
 import cv2 as cv
 
 from SRC.image.imageSaver import saveImage
+
+def printProgressBar(iteration, total, start_time, prefix='', suffix='', length=50, fill='█'):
+  elapsed_time = time.time() - start_time
+  progress = iteration / float(total)
+  estimated_time = elapsed_time / progress if progress > 0 else 0
+  remaining_time = estimated_time - elapsed_time
+
+  percent = ('{0:.1f}').format(100 * progress)
+  filled_length = int(length * iteration // total)
+  bar = fill * filled_length + '-' * (length - filled_length)
+  time_str = 'Remaining: {0:.1f}s'.format(remaining_time)
+  count_str = '{}/{}'.format(iteration, total)
+
+  sys.stdout.write('\r%s |%s| %s%% %s %s %s' % (prefix, bar, percent, count_str, time_str, suffix))
+  sys.stdout.flush()
+
 
 def noise(img: List[List[List[int]]], deviation: int) -> List[List[List[int]]]:
   noise = np.random.random_integers(low = -deviation, high=deviation, size=img.shape)
@@ -17,6 +34,24 @@ def noise(img: List[List[List[int]]], deviation: int) -> List[List[List[int]]]:
   img = np.clip(img, 0, 255)
   img = img.astype(np.uint8)
   return img
+
+def changeHSB(img: List[List[List[int]]], hue: int = 0, saturation: int = 0, brightness: int = 0) -> List[List[List[int]]]:
+  # Convert the input list to a NumPy array
+  imgArray = np.array(img, dtype=np.uint8)
+  
+  # Convert the image from RGB to HSV
+  hsvImage = cv.cvtColor(imgArray, cv.COLOR_RGB2HSV)
+
+  # Add the hue, saturation, and brightness offsets
+  hsvImage[:, :, 0] = (hsvImage[:, :, 0] + hue) % 180
+  hsvImage[:, :, 1] = np.clip(hsvImage[:, :, 1] + saturation, 0, 255)
+  hsvImage[:, :, 2] = np.clip(hsvImage[:, :, 2] + brightness, 0, 255)
+
+  # Convert the image back to RGB
+  adjustedImg = cv.cvtColor(hsvImage, cv.COLOR_HSV2RGB)
+
+  # Convert the adjusted image back to a list of lists
+  return adjustedImg.tolist()
 
 def makeVarients(image: List[List[List[int]]], variantNumber:int = 10) -> List[List[List[List[int]]]]: 
     # Height and width is always the same. It's defined as size
@@ -45,7 +80,8 @@ def clearModified():
 
 def clearPath(path:str):
   print('\n Removeing images from: '+ path)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(path))-1)
+  length = len(os.listdir(path))-1
+  start_time = time.time()
   i = 0
   for file_name in os.listdir(path):
     # construct full file path
@@ -53,7 +89,7 @@ def clearPath(path:str):
     if ".jpg" in file:
       os.remove(file)
       i = i+1
-      progbar.update(i)
+      printProgressBar(i, length, start_time)
     else:
       try:
         clearPath(file)

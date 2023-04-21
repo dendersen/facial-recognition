@@ -28,7 +28,7 @@ def modelAcc(label: str):
   axes[1].legend()
   plt.show()
 
-label:str = "Niels"
+label:str = "David"
 
 Network = SiameseNeuralNetwork(
   person = label,
@@ -42,7 +42,7 @@ Network = SiameseNeuralNetwork(
   resetNetwork = True
 )
 
-saveData(*Network.train(1),label)
-modelAcc(label)
+saveData(*Network.train(20),label)
+# modelAcc(label)
 Network.makeAPredictionOnABatch()
-Network.runSiameseModel(Camera=Camera(0), detectionThreshold=0.5, verificationThreshold=0.5) 
+# Network.runSiameseModel(Camera=Camera(0), detectionThreshold=0.5, verificationThreshold=0.5) 

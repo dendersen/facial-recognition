@@ -161,10 +161,9 @@ def smooth(pic, threshold: int = -1, strong: float = 1.0, central: float = 1.0):
 
 def difference(pic1, pic2, amplification: float = 1, threshold: int = 0):
     # Apply a Gaussian blur to reduce noise
-    # pic1_blurred = cv.GaussianBlur(pic1, (5, 5), 0)
-    # pic2_blurred = cv.GaussianBlur(pic2, (5, 5), 0)
-    pic1_blurred = pic1.copy()
-    pic2_blurred = pic2.copy()
+
+    pic1_blurred = cv.GaussianBlur(pic1, (3, 3), 0)
+    pic2_blurred = cv.GaussianBlur(pic2, (3, 3), 0)
     temp = np.clip((pic1_blurred.astype(np.float32) - pic2_blurred.astype(np.float32) * amplification), -255, 255).astype(np.uint8)
 
     if threshold > 0:

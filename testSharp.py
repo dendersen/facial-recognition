@@ -10,7 +10,7 @@ allItems = loadImgAsArr(10,True,cropOri=True)
 for i,img in enumerate(allItems):
   pic = img[0]
   pic = sharpen(pic,threshold=5,showSteps=False,strength=1.2,amplification = 1.03)#keep amplification as low as possible!! or the original image will shine through, can be mitigated with threshold
-  printProgressBar(i,len(allItems),tim)
+  printProgressBar(i+1,len(allItems),tim)
 
 fig = plt.figure(dpi=300)
 

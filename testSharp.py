@@ -11,7 +11,7 @@ while(True):
     pic = Cam.processFace(pic,info=False)
     if(type(pic) != type(None)):
       cv.imshow("Cam output: ", pic)
-      sharpen(pic,strength=0.3,threshold=50,showSteps=True,showEnd=True,amplification=1)
+      sharpen(pic,strength=0.3,threshold=10,showSteps=True,showEnd=True,amplification = 1)
     else:
       continue
   else:

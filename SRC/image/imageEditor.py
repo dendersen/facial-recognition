@@ -3,18 +3,7 @@ from SRC.image.imageLoader import ProcessOther, loadImgAsArr
 from typing import List, Tuple
 import tensorflow as tf
 import os
-# TODO lav en funktion som:
-# tager imod et kvadratisk billede af n- størelse af typen nr array 
-# billedet har er en buffer rundt om ansigtet
-
-# Skal rykke billedet rundt, men hele ansigtet skal stadig være i frame 
-# der skal laves flere forskælige af disse rykkede ansigter
-
-# for værd af disse nye billeder skal der
-# laves naturlige lindende versioner af billedet
-
-# sender disse billeder til image saver
-
+import tarfile
 
 import numpy as np
 import random
@@ -92,5 +81,20 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
   if(dataset):
     ProcessOther()
 
-
+def getLabbeledFaces():
+  forDatasetPath = "images\\modified\\forDataset"
+  clearPath(forDatasetPath)
+  # Uncompress Tar GZ Labelled faces in the wild
+  with tarfile.open('lfw.tgz', "r:gz") as tar:
+    print(f'\n Adding extra images to: {forDatasetPath} : From Untar Labelled Faces in the Wild Dataset')
+    progbar = tf.keras.utils.Progbar(len(tar.getmembers()))
+    i = 0
+    # Move LFW Images to the following repository data/negative
+    for member in tar.getmembers():
+      i = i+1
+      progbar.update(i)
+      if member.name.endswith(".jpg") or member.name.endswith(".png"):
+        member.name = os.path.basename(member.name)
+        tar.extract(member, forDatasetPath)
+  ProcessOther()
 

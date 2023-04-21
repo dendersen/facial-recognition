@@ -1,5 +1,4 @@
 import os
-import tarfile
 import random
 import math
 from typing import List
@@ -9,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
-from SRC.image.imageEditor import clearPath, modifyOriginals
+from SRC.image.imageEditor import clearPath, modifyOriginals, getLabbeledFaces
 from SRC.image.imageLoader import ProcessOther
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
@@ -25,27 +24,13 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
   posPath = os.path.join('images\DataSiameseNetwork','positive')
   negPath = os.path.join('images\DataSiameseNetwork','negative')
   ancPath = os.path.join('images\DataSiameseNetwork','anchor')
-  tempOtherPath = "images\\modified\\forDataset"
   
   clearPath(posPath)
   clearPath(negPath)
   clearPath(ancPath)
   # Get exstra negative data, from Untar Labelled Faces in the Wild Dataset
   if reprocessDataset:
-    clearPath(tempOtherPath)
-    # Uncompress Tar GZ Labelled faces in the wild
-    with tarfile.open('lfw.tgz', "r:gz") as tar:
-      print(f'\n Adding extra images to: {tempOtherPath} : From Untar Labelled Faces in the Wild Dataset')
-      progbar = tf.keras.utils.Progbar(len(tar.getmembers()))
-      i = 0
-      # Move LFW Images to the following repository data/negative
-      for member in tar.getmembers():
-        i = i+1
-        progbar.update(i)
-        if member.name.endswith(".jpg") or member.name.endswith(".png"):
-          member.name = os.path.basename(member.name)
-          tar.extract(member, tempOtherPath)
-    ProcessOther()
+    getLabbeledFaces()
   
   # Get all negative data
   for name in ["Christoffer","Niels","David","Other"]:

@@ -11,7 +11,7 @@ class Camera:
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     self.mtcnn = MTCNN(min_face_size=120, select_largest=True, device=device)
   
-  def readCam(self,show:bool = True)->List[List[int]]:
+  def readCam(self,show:bool = True)->List[List[List[int]]]:
     #-- 2. Read the video stream
     if not self.cameraDevice.isOpened:
       print('--(!)Error opening video capture')
@@ -66,6 +66,4 @@ class Camera:
           print("We found that there is: " + str(probs[0]) + "% that it is a face")
         if(show):
           cv.imshow('This is the face', buff2)
-        print("We found that there is: " + str(probs[0]) + "% that it is a face")
-        cv.imshow('This is the face', buff2)
         return buff2

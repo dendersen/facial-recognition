@@ -167,7 +167,8 @@ def difference(pic1, pic2, amplification: float = 1, threshold: int = 0):
     temp = np.clip((pic1_blurred.astype(np.float32) - pic2_blurred.astype(np.float32) * amplification), -255, 255).astype(np.uint8)
 
     if threshold > 0:
-        mask = np.abs(pic1 / temp) > (threshold / 255.0)
+        eps = 1e-8
+        mask = np.abs((pic1 + eps) / (temp + eps)) > (threshold / 255.0)
         temp[mask] = np.zeros_like(pic1)[mask]
 
     return temp
@@ -176,7 +177,8 @@ def combine(pic1, pic2, strength: float, threshold: int = 0):
     temp = np.clip(pic1.astype(np.float32) + pic2.astype(np.float32) * strength, 0, 255).astype(np.uint8)
 
     if threshold > 0:
-        mask = (pic1 / temp) < (threshold / 255.0)
+        eps = 1e-8
+        mask = ((pic1 + eps) / (temp + eps)) < (threshold / 255.0)
         temp[mask] = pic1[mask]
 
     return temp

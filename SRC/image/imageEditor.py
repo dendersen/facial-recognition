@@ -154,21 +154,22 @@ def smooth(pic, threshold: int = -1, strong: float = 1.0, central: float = 1.0):
     tempList = cv.filter2D(orgPic, -1, kernel)
 
     if threshold > 0:
-        mask = (tempList - orgPic) < (threshold / 255.0)
+        mask = (orgPic - tempList) < (threshold / 255.0)
         tempList[mask] = orgPic[mask]
 
     return tempList
 
 def difference(pic1, pic2, amplification: float = 1, threshold: int = 0):
     # Apply a Gaussian blur to reduce noise
-    pic1_blurred = smooth(pic1,strong=0.1,central=6)
-    pic2_blurred = smooth(pic2,strong=0.1,central=6)
-
+    # pic1_blurred = cv.GaussianBlur(pic1, (5, 5), 0)
+    # pic2_blurred = cv.GaussianBlur(pic2, (5, 5), 0)
+    pic1_blurred = pic1.copy()
+    pic2_blurred = pic2.copy()
     temp = np.clip((pic1_blurred.astype(np.float32) - pic2_blurred.astype(np.float32) * amplification), -255, 255).astype(np.uint8)
 
     if threshold > 0:
         eps = 1e-8
-        mask = np.abs((pic1 + eps) / (temp + eps)) > (threshold / 255.0)
+        mask = np.abs((temp + eps) / (pic1 + eps)) > (threshold / 255.0)
         temp[mask] = np.zeros_like(pic1)[mask]
 
     return temp
@@ -178,7 +179,7 @@ def combine(pic1, pic2, strength: float, threshold: int = 0):
 
     if threshold > 0:
         eps = 1e-8
-        mask = ((pic1 + eps) / (temp + eps)) < (threshold / 255.0)
+        mask = ((temp + eps) / (pic1 + eps)) < (threshold / 255.0)
         temp[mask] = pic1[mask]
 
     return temp

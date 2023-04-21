@@ -3,23 +3,20 @@ from SRC.image.imageLoader import ProcessOther, loadImgAsArr
 from typing import List, Tuple
 import tensorflow as tf
 import os
-# TODO lav en funktion som:
-# tager imod et kvadratisk billede af n- størelse af typen nr array 
-# billedet har er en buffer rundt om ansigtet
-
-# Skal rykke billedet rundt, men hele ansigtet skal stadig være i frame 
-# der skal laves flere forskælige af disse rykkede ansigter
-
-# for værd af disse nye billeder skal der
-# laves naturlige lindende versioner af billedet
-
-# sender disse billeder til image saver
-
-
 import numpy as np
 import random
+import cv2 as cv
 
 from SRC.image.imageSaver import saveImage
+
+def noise(img: List[List[List[int]]], deviation: int) -> List[List[List[int]]]:
+  noise = np.random.random_integers(low = -deviation, high=deviation, size=img.shape)
+  img = img.astype(np.int32)
+  
+  img = cv.add(img,noise)
+  img = np.clip(img, 0, 255)
+  img = img.astype(np.uint8)
+  return img
 
 def makeVarients(image: List[List[List[int]]], variantNumber:int = 10) -> List[List[List[List[int]]]]: 
     # Height and width is always the same. It's defined as size
@@ -91,6 +88,3 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
   
   if(dataset):
     ProcessOther()
-
-
-

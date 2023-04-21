@@ -158,13 +158,13 @@ def smooth(pic, threshold: int = -1, strong: float = 1.0, central: float = 1.0):
   tempList = cv.filter2D(orgPic, -1, kernel)
   
   if threshold > 0:
-    mask = np.abs(tempList - orgPic) < (threshold / 255.0)
+    mask = (tempList - orgPic) < (threshold / 255.0)
     tempList[mask] = orgPic[mask]
 
   return tempList
 
 def difference(pic1, pic2, amplification: float = 1):
-  return np.clip(np.abs(pic1.astype(np.float32) - pic2.astype(np.float32) * amplification), 0, 255).astype(np.uint8)
+  return np.clip((pic1.astype(np.float32) - pic2.astype(np.float32) * amplification), 0, 255).astype(np.uint8)
 
 def combine(pic1, pic2, strength: float, threshold: int = 0):
   temp = np.clip(pic1.astype(np.float32) + pic2.astype(np.float32) * strength, 0, 255).astype(np.uint8)

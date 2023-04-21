@@ -12,7 +12,7 @@ import cv2 as cv
 
 from SRC.image.imageSaver import saveImage
 
-def printProgressBar(iteration, total, start_time, prefix='', suffix='', length=50, fill='█'):
+def printProgressBar(iteration, total, start_time, prefix='Progress:', suffix='Complete', length=50, fill='█'):
   elapsed_time = time.time() - start_time
   progress = iteration / float(total)
   estimated_time = elapsed_time / progress if progress > 0 else 0

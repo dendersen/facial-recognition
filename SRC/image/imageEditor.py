@@ -130,17 +130,13 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
 
     ProcessOther()
 
-from typing import List
-import numpy as np
-import cv2 as cv
-
 def sharpen(pic: List[List[List[int]]], strength: float = 0.2, threshold: int = -1, showSteps: bool = False, showEnd: bool = False, amplification: float = 1):
     pic = np.array(pic)
     process = smooth(pic, threshold)
     if showSteps:
       cv.imshow('smooth output:', cv.convertScaleAbs(process))
 
-    process = difference(pic, process, amplification,threshold)
+    process = difference(pic, process, amplification, threshold)
     if showSteps:
       cv.imshow('detail output:', cv.convertScaleAbs(cv.multiply(process.copy(), np.ones_like(pic) * 2)))
 
@@ -150,33 +146,37 @@ def sharpen(pic: List[List[List[int]]], strength: float = 0.2, threshold: int = 
 
     return cv.convertScaleAbs(pic)
 
-def smooth(pic: List[List[List[int]]], threshold: int = -1, strong: float = 1.0, central: float = 1.0):
-  orgPic = pic.copy()
-  kernel = np.array([[strong, strong, strong],
+def smooth(pic, threshold: int = -1, strong: float = 1.0, central: float = 1.0):
+    orgPic = pic.copy()
+    kernel = np.array([[strong, strong, strong],
                       [strong, central, strong],
                       [strong, strong, strong]]) / (central + 8 * strong)
-  tempList: List[List[List[int]]] = cv.filter2D(orgPic, -1, kernel)
-  
-  if threshold > 0:
-    mask: List[List[List[bool]]] = (tempList - orgPic) < (threshold / 255.0)
-    tempList[mask] = orgPic[mask]
+    tempList = cv.filter2D(orgPic, -1, kernel)
 
-  return tempList
+    if threshold > 0:
+        mask = (tempList - orgPic) < (threshold / 255.0)
+        tempList[mask] = orgPic[mask]
 
-def difference(pic1, pic2, amplification: float = 1, threshold:int = 0):
-  temp = np.clip((pic1.astype(np.float32) - pic2.astype(np.float32) * amplification), -255, 255).astype(np.uint8)
+    return tempList
 
-  if threshold > 0:
-    mask:List[List[List[bool]]] = np.abs(pic1/temp) > (threshold / 255.0)
-    temp[mask] = np.zeros_like(pic1)[mask]
-    
-  return temp
+def difference(pic1, pic2, amplification: float = 1, threshold: int = 0):
+    # Apply a Gaussian blur to reduce noise
+    pic1_blurred = cv.GaussianBlur(pic1, (5, 5), 0)
+    pic2_blurred = cv.GaussianBlur(pic2, (5, 5), 0)
+
+    temp = np.clip((pic1_blurred.astype(np.float32) - pic2_blurred.astype(np.float32) * amplification), -255, 255).astype(np.uint8)
+
+    if threshold > 0:
+        mask = np.abs(pic1 / temp) > (threshold / 255.0)
+        temp[mask] = np.zeros_like(pic1)[mask]
+
+    return temp
 
 def combine(pic1, pic2, strength: float, threshold: int = 0):
-  temp:List[List[List[int]]] = np.clip(pic1.astype(np.float32) + pic2.astype(np.float32) * strength, 0, 255).astype(np.uint8)
-  
-  if threshold > 0:
-    mask:List[List[List[bool]]] = (pic1/temp) < (threshold / 255.0)
-    temp[mask] = pic1[mask]
+    temp = np.clip(pic1.astype(np.float32) + pic2.astype(np.float32) * strength, 0, 255).astype(np.uint8)
 
-  return temp
+    if threshold > 0:
+        mask = (pic1 / temp) < (threshold / 255.0)
+        temp[mask] = pic1[mask]
+
+    return temp

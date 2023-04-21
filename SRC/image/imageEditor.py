@@ -1,9 +1,8 @@
 from SRC.image.imageSaver import saveImage
 from SRC.image.imageLoader import ProcessOther, loadImgAsArr
 from typing import List, Tuple
-import tensorflow as tf
+# import tensorflow as tf
 import os
-from typing import List
 import cv2 as cv
 import numpy as np
 # TODO lav en funktion som:
@@ -19,7 +18,6 @@ import numpy as np
 # sender disse billeder til image saver
 
 
-import numpy as np
 import random
 
 from SRC.image.imageSaver import saveImage
@@ -51,7 +49,7 @@ def clearModified():
 
 def clearPath(path:str):
   print('\n Removeing images from: '+ path)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(path))-1)
+  # progbar = tf.keras.utils.Progbar(len(os.listdir(path))-1)
   i = 0
   for file_name in os.listdir(path):
     # construct full file path
@@ -59,7 +57,7 @@ def clearPath(path:str):
     if ".jpg" in file:
       os.remove(file)
       i = i+1
-      progbar.update(i)
+      # progbar.update(i)
     else:
       try:
         clearPath(file)
@@ -101,7 +99,7 @@ def sharpen(pic:List[List[List[int]]], strength:float = 0.2,threshold = -1, show
     cv.imshow('smooth output: ',cv.convertScaleAbs(np.array(process)))
   process = difference(pic,process,amplification)
   if(showSteps):
-    cv.imshow('detail output: ',cv.convertScaleAbs(np.array(process)))
+    cv.imshow('detail output: ',cv.convertScaleAbs(cv.multiply(np.array(process).copy(),np.ones_like(pic)*2)))
   pic = combine(pic,process,strength,threshold)
   if(showEnd):
     cv.imshow('sharp output: ',cv.convertScaleAbs(np.array(pic)))
@@ -124,32 +122,32 @@ def smooth(pic:List[List[List[int]]],threshold = -1,strong:float = 1.0,central:f
           float(orgPic[y+1][x+2][col])/(255.0)*strong+
           float(orgPic[y+2][x+2][col])/(255.0)*strong
         )/(central+8*strong))*255)
-        if(abs(int(tempList[y][x][col]) - int(orgPic[y][x][col])) < threshold):
+        if(min(abs((float(tempList[y][x][col])+0.0001) / (float(orgPic[y][x][col])+0.0001)),abs((float(orgPic[y][x][col])+0.0001) / (float(tempList[y][x][col])+0.0001))) < float(threshold)/255.0):
           tempList[y][x][col] = orgPic[y][x][col]
   return tempList
 
 def difference(pic1:List[List[List[int]]],pic2:List[List[List[int]]],amplification:float = 1) -> List[List[List[int]]]:
-  tempPic1 = cv.cvtColor(pic1, cv.COLOR_BGR2RGB)
-  tempPic2 = cv.cvtColor(pic2, cv.COLOR_BGR2RGB)
+  tempPic1 = pic1.copy()
+  tempPic2 = pic2.copy()
   for ny,ty in zip(range(len(tempPic1)),range(len(tempPic2))):
     for nx,tx in zip(range(len(tempPic1[ny])),range(len(tempPic2[ty]))):
-      tempPic1[ty][tx][0] = min(int(abs(int(tempPic1[ty][tx][0]) - int(tempPic2[ny][nx][0])*amplification)),255)
-      tempPic1[ty][tx][1] = min(int(abs(int(tempPic1[ty][tx][1]) - int(tempPic2[ny][nx][1])*amplification)),255)
-      tempPic1[ty][tx][2] = min(int(abs(int(tempPic1[ty][tx][2]) - int(tempPic2[ny][nx][2])*amplification)),255)
+      for ncol,tcol in zip(range(len(tempPic1[ny][nx])),range(len(tempPic2[ty][tx]))):
+        tempPic1[ny][nx][ncol] = min(int(abs(int(tempPic1[ny][nx][ncol]) - int(tempPic2[ty][tx][tcol])*amplification)),255)
   
-  return cv.cvtColor(tempPic1, cv.COLOR_RGB2BGR)
+  return tempPic1
 
 def combine(pic1:List[List[List[int]]],pic2:List[List[List[int]]], strength:float, threshold = 0) -> List[List[List[int]]]:
-  tempPic1 = pic1
-  tempPic2 = pic2
+  tempPic1 = pic1.copy()
+  tempPic2 = pic2.copy()
   for ny,ty in zip(range(len(tempPic1)),range(len(tempPic2))):
     for nx,tx in zip(range(len(tempPic1[ny])),range(len(tempPic2[ty]))):
       for ncol,tcol in zip(range(len(tempPic1[ny][nx])),range(len(tempPic2[ty][nx]))):
-        temp = abs(int(float(tempPic1[ty][tx][tcol])) + int(float(tempPic2[ny][nx][ncol])))
+        temp = abs(int(float(tempPic1[ty][tx][tcol])) + int(float(tempPic2[ny][nx][ncol])*strength))
         if(temp <= 255 and temp >= threshold):
           tempPic1[ty][tx][tcol] = temp
         elif(temp > 255):
           tempPic1[ty][tx][tcol] = 255
         else:
-          tempPic1[ty][tx][tcol] = int(float(tempPic1[ty][tx][tcol]))
+          tempPic1[ty][tx] = pic1[ty][tx]
+          continue
   return tempPic1

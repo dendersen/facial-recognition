@@ -66,6 +66,4 @@ class Camera:
           print("We found that there is: " + str(probs[0]) + "% that it is a face")
         if(show):
           cv.imshow('This is the face', buff2)
-        print("We found that there is: " + str(probs[0]) + "% that it is a face")
-        cv.imshow('This is the face', buff2)
         return buff2

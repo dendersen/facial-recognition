@@ -7,6 +7,7 @@ import os
 import numpy as np
 import random
 import cv2 as cv
+import math
 
 
 
@@ -182,3 +183,31 @@ def combine(pic1, pic2, strength: float, threshold: int = 0):
       temp[mask] = pic1[mask]
   
   return temp
+
+def linearSharpen(img: List[List[List[int]]], kernelSize: tuple = (5, 5), originalImageWeight: float = 1, coarseWeight: float = 0.5):
+  coarse = customGaussianBlur(img, kernelSize, 1)
+  cv.imshow('coarse output:', cv.convertScaleAbs(coarse.astype(np.uint8)))
+  
+  fine_cv = cv.subtract(img, coarse)
+  cv.imshow('fine output:', cv.convertScaleAbs(fine_cv.astype(np.uint8)*10))
+  
+  sharpenedImage = cv.addWeighted(img, originalImageWeight, fine_cv, coarseWeight, 0)
+  cv.imshow('sharp output:', cv.convertScaleAbs(sharpenedImage.astype(np.uint8)))
+
+# Gaussian kernel function
+def gaussianKernel(size, sigma):
+  kernel = np.zeros(size,dtype=np.float32)
+  k = (size[0] - 1) // 2
+  
+  for i in range(size[0]):
+    for j in range(size[1]):
+      x = i - k
+      y = j - k
+      kernel[i, j] = (1 / (2 * math.pi * sigma ** 2)) * math.exp(-(x ** 2 + y ** 2) / (2 * sigma ** 2))
+  
+  return kernel /kernel.sum()
+
+# Custom Gaussian blur function
+def customGaussianBlur(img: List[List[List[int]]], kernelSize: tuple = (5, 5), sigma: int = 1):
+  kernel = gaussianKernel(kernelSize, sigma)
+  return cv.filter2D(img, -1, kernel)

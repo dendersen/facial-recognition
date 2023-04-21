@@ -1,29 +1,19 @@
-import math
-from SRC.image.imageEditor import sharpen, printProgressBar
-from SRC.image.imageLoader import loadImgAsArr
-from matplotlib import pyplot as plt
-from time import time
+import cv2 as cv
+from SRC.image.imageCapture import Camera
+from SRC.image.imageEditor import sharpen
+Cam = Camera(0)
 
-images = []
-tim  = time()
-allItems = loadImgAsArr(10,False,cropOri=False)
-for i,img in enumerate(allItems):
-  pic = img[0]
-  pic = sharpen(pic,threshold=5,showSteps=False,strength=0.9,amplification = 1.07)#keep amplification as low as possible!! or the original image will shine through, can be mitigated with threshold
-  printProgressBar(i,len(allItems),tim)
-  images.append(pic)
-print("\r" + (" "*100) + "\rdone")
-
-
-
-# size = int(math.ceil(math.sqrt(len(images))))
-for i, image in enumerate(zip(images,allItems)):
-  fig = plt.figure(dpi=300)
-  fig.add_subplot(2,1,1)
-  plt.imshow(image[0], cmap="gray")  
-  plt.axis("off")
-  fig.add_subplot(2,1,2)
-  plt.imshow(image[1][0], cmap="gray")
-  plt.axis("off")
-  plt.show()
-
+while(True):
+  while cv.waitKey(10) != 32:
+    pic = Cam.readCam(False)
+    cv.imshow("Cam output: ", pic)
+  if(type(pic) != type(None)):
+    pic = Cam.processFace(pic,info=False)
+    if(type(pic) != type(None)):
+      cv.imshow("Cam output: ", pic)
+      sharpen(pic,strength=0.3,threshold=50,showSteps=True,showEnd=True,amplification=1)
+    else:
+      continue
+  else:
+    continue
+  while cv.waitKey(10) != 27: pass

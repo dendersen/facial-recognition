@@ -147,10 +147,20 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7, bachSize: int = 16)
   otherFolderPath = os.path.join('images/modified','Other')
   
   # makes tenserflowlist of imagepaths
-  chrisImagePath = tf.data.Dataset.list_files(chrisFolderPath+'\*.jpg').take(loadAmount)
-  davidImagePath = tf.data.Dataset.list_files(davidFolderPath+'\*.jpg').take(loadAmount)
-  nielsImagePath = tf.data.Dataset.list_files(nielsFolderPath+'\*.jpg').take(loadAmount)
-  otherImagePath = tf.data.Dataset.list_files(otherFolderPath+'\*.jpg').take(loadAmount)
+  chrisImagePath = tf.data.Dataset.list_files(chrisFolderPath+'\*.jpg').take(-1)
+  davidImagePath = tf.data.Dataset.list_files(davidFolderPath+'\*.jpg').take(-1)
+  nielsImagePath = tf.data.Dataset.list_files(nielsFolderPath+'\*.jpg').take(-1)
+  otherImagePath = tf.data.Dataset.list_files(otherFolderPath+'\*.jpg').take(-1)
+  
+  chrisImagePath.shuffle(10)
+  davidImagePath.shuffle(10)
+  nielsImagePath.shuffle(10)
+  otherImagePath.shuffle(10)
+  
+  chrisImagePath = chrisImagePath.take(loadAmount)
+  davidImagePath = davidImagePath.take(loadAmount)
+  nielsImagePath = nielsImagePath.take(loadAmount)
+  otherImagePath = otherImagePath.take(loadAmount)
   
   # Adds label to imagepaths
   chrisData = tf.data.Dataset.zip((chrisImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(chrisImagePath),0)))) 

@@ -22,10 +22,10 @@ def init():
   camera = Camera(0)
   faces = []
   label = getValidLabel()
-  waitTime = 1 #smaller alows more pictures, higher makes keybord less responsive
-  overide = True
+  waitTime = 10 #smaller alows more pictures, higher makes keybord less responsive
+  overide = False
   pic = []
-  useTimer = True
+  useTimer = False
   captureTime = 5000
   saveAmount = 100
   Time = int(time()*1000)

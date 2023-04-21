@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
-from SRC.image.imageEditor import clearPath, modifyOriginals, getLabbeledFaces
+from SRC.image.imageEditor import clearPath, modifyOriginals, getLabeledFaces
 from SRC.image.imageLoader import ProcessOther
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
@@ -30,7 +30,7 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
   clearPath(ancPath)
   # Get exstra negative data, from Untar Labelled Faces in the Wild Dataset
   if reprocessDataset:
-    getLabbeledFaces()
+    getLabeledFaces()
   
   # Get all negative data
   for name in ["Christoffer","Niels","David","Other"]:

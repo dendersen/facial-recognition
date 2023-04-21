@@ -53,9 +53,12 @@ def clearPath(path:str):
         pass
 
 def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
+  print("clearing existing images")
   clearPath('images\\modified\\Christoffer')
   clearPath('images\\modified\\Niels')
   clearPath('images\\modified\\David')
+  
+  print("done clearing")
   
   IDChris = 0
   IDDavid = 0
@@ -80,8 +83,10 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
   
   if(dataset):
     ProcessOther()
+    
+  print("done")
 
-def getLabbeledFaces():
+def getLabeledFaces():
   forDatasetPath = "images\\modified\\forDataset"
   clearPath(forDatasetPath)
   # Uncompress Tar GZ Labelled faces in the wild

@@ -5,14 +5,12 @@ from typing import List, Tuple
 import sys
 import time
 import os
+import tarfile
 import numpy as np
 import random
 import cv2 as cv
 from PIL import Image
 from SRC.image.imageCapture import Camera
-
-
-from SRC.image.imageSaver import saveImage
 
 def printProgressBar(iteration, total, start_time, prefix='Progress:', suffix='Complete', length=50, fill='█'):
   total -= 1
@@ -26,6 +24,7 @@ def printProgressBar(iteration, total, start_time, prefix='Progress:', suffix='C
   bar = fill * filled_length + '-' * (length - filled_length)
   time_str = 'Remaining: {0:.1f}s'.format(remaining_time)
   count_str = '{}/{}'.format(iteration, total)
+
 
   sys.stdout.write('\r%s |%s| %s%% %s %s %s' % (prefix, bar, percent, count_str, time_str, suffix))
   sys.stdout.flush()
@@ -113,11 +112,12 @@ def clearPath(path:str):
         pass
 
 def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
+  print("clearing existing images")
   clearPath('images\\modified\\Christoffer')
   clearPath('images\\modified\\Niels')
   clearPath('images\\modified\\David')
-  
-  
+ 
+  print("done clearing")
   
   IDChris = 0
   IDDavid = 0
@@ -154,7 +154,25 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
   
   if(dataset):
     ProcessOther()
+    
+  print("done")
 
+def getLabeledFaces():
+  forDatasetPath = "images\\modified\\forDataset"
+  clearPath(forDatasetPath)
+  # Uncompress Tar GZ Labelled faces in the wild
+  with tarfile.open('lfw.tgz', "r:gz") as tar:
+    print(f'\n Adding extra images to: {forDatasetPath} : From Untar Labelled Faces in the Wild Dataset')
+    progbar = tf.keras.utils.Progbar(len(tar.getmembers()))
+    i = 0
+    # Move LFW Images to the following repository data/negative
+    for member in tar.getmembers():
+      i = i+1
+      progbar.update(i)
+      if member.name.endswith(".jpg") or member.name.endswith(".png"):
+        member.name = os.path.basename(member.name)
+        tar.extract(member, forDatasetPath)
+  ProcessOther()
 
 def sharpen(pic: List[List[List[int]]], strength: float = 2, showSteps: bool = False, showEnd: bool = False,size:int = 3):
   pic = np.array(pic)

@@ -190,28 +190,5 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7, bachSize: int = 16)
   testData = testData.prefetch(8)
   return (trainData, testData)
 
-def ProcessOther():
-  orgPath = "images\\modified\\forDataset"
-  cam = Camera(0)
-  # Get all data
-  img = []
-  fail = 0
-  progbar = tf.keras.utils.Progbar(len(os.listdir(orgPath))-1)
-  for i,picture in enumerate(os.listdir(orgPath)):
-    if ".jpg" in picture:
-      path = os.path.join(orgPath, picture)
-      temp = cam.processFace(array(Image.open(path)),False)
-      if(type(temp) != type(None)):
-        temp = Image.fromarray(temp)
-        temp.resize((120,120))
-        temp.crop((10,10,110,110))
-        img.append(temp)
-      else:
-        fail += 1
-        if(fail%10 == 0):
-          print(" mistakes:" + str(fail) + " failureRate:" + str((fail/i)*100) + "%",end = "")
-    progbar.update(i)
-  if(fail > 0):
-    print(f"there whas found {fail} pictures without a face in the dataset")
-  saveImage(img,"Other",True)
+
 

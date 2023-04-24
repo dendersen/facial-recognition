@@ -80,38 +80,8 @@ def makeModel(loadAmount: int, trainDataSize:float = .7, epochs: int = 15):
 
     model.summary()
     
-    acc,val_acc,loss,val_loss,epochs_range = fitModelToData(model, trainingData,testData,epochs=3)
+    acc,val_acc,loss,val_loss,epochs_range = fitModelToData(model, trainingData,testData,epochs=epochs)
     
     showResults(acc,val_acc,loss,val_loss,epochs_range)
     
     model.save("SimpleAi", save_format='tf')
-
-
-# # tag et nyt billede
-# Camera = IC.Camera(0)
-# while True:
-#     pic = Camera.readCam()
-#     if cv.waitKey(10) == 32: # wait for spacebar to be pressed
-#         BGRface = Camera.processFace(pic)
-#         if type(BGRface) == np.ndarray:
-#             # save original face
-#             RGBface = cv.cvtColor(BGRface, cv.COLOR_BGR2RGB)
-#             RGBface = cv.resize(RGBface,(100,100))
-#             print('I took a picture')
-#             plt.imshow(RGBface)
-#             plt.show()
-            
-#             # Add a batch dimension
-#             RGBface = tf.expand_dims(RGBface, axis=0)
-            
-#             predictions = model.predict(RGBface)
-#             score = tf.nn.softmax(predictions[0])
-            
-#             classNames = ["Chris","David","Niels","Other"]
-#             print(
-#                 "This image most likely belongs to {} with a {:.2f} percent confidence."
-#                 .format(classNames[np.argmax(score)], 100 * np.max(score))
-#             )
-#             print(score)
-#     if cv.waitKey(10) == 27:
-#         break

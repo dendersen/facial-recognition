@@ -75,8 +75,6 @@ def useSimpleNeuralNetwork():
 def useSiameseNeuralNetwork():
     pass
 
-
-
 print("Welcome to our models. Please select a model: \n",
       "Press 1: KNN \n", 
       "Press 2: Simple Neural Network \n", 

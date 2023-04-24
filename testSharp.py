@@ -1,6 +1,6 @@
 import cv2 as cv
 from SRC.image.imageCapture import Camera
-from SRC.image.imageEditor import linearSharpen, sharpen
+from SRC.image.imageEditor import sharpen
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QSlider, QPushButton, QHBoxLayout
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 Cam = Camera(0)
@@ -73,17 +73,10 @@ class CameraThread(QThread):
   def run(self):
     global pic
     while True:
-      # while cv.waitKey(10) != 32:
       pic = Cam.readCam(False)
-      # cv.imshow("Cam output: ", pic)
-
-      # if type(pic) != type(None):
-      #   pic = Cam.processFace(pic, info=False)
       if type(pic) != type(None):
         cv.imshow("Cam output: ", pic)
         slider_window.update_image_signal.emit()
-        # else:
-        #   continue
       else:
         continue
       if cv.waitKey(20) == 27:

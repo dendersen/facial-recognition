@@ -1,9 +1,9 @@
 from typing import Union
 from PIL import Image
-from typing import List, Tuple
+from typing import List
 
 extension:str = ".jpg"
-def saveImage(img:Union[List[Image.Image], List[List[List[List[int]]]],Image.Image], label:str, modified:bool ,ID:int = 0,forceID:bool = False) -> None:
+def saveImage(img:Union[List[Image.Image], List[List[List[List[int]]]],Image.Image], label:str, modified:bool ,ID:int = 0,forceID:bool = False, forceNoPrint:bool = False) -> None:
   """saves an image to the correct location based on it's label
   
   Args:
@@ -37,7 +37,7 @@ def saveImage(img:Union[List[Image.Image], List[List[List[List[int]]]],Image.Ima
     image.save(path + str(ID) + ".jpg")
     ID += 1
   
-  if(len(img) > 5):
+  if((not forceNoPrint) and len(img) > 5):
     print(f"{len(img)} images where saved")
   
   return

@@ -4,8 +4,6 @@ import cv2 as cv
 import numpy as np
 from SRC.AI.knn.knn import Knn
 from SRC.AI.knn.point import Point
-from SRC.image.imageCapture import Camera
-from SRC.image.imageCapture import Cam
 # from SRC.image.imageEditor import makeVarients
 import SRC.image.imageLoader as IL
 # import SRC.image.imageSaver as IS

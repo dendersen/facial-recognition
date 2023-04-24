@@ -28,21 +28,21 @@ def modelAcc(label: str):
   axes[1].legend()
   plt.show()
 
-label:str = "David"
+label:str = "Christoffer"
 
 Network = SiameseNeuralNetwork(
   person = label,
-  loadAmount = 1500,
+  loadAmount = 50,
   varients = 3,
   learning_rate = 1e-5,
   trainDataSize = .9,
   batchSize = 16,
   reprocessDataset = False,
   useDataset = True,
-  resetNetwork = True
+  resetNetwork = False
 )
 
-saveData(*Network.train(20),label)
+# saveData(*Network.train(20),label)
 # modelAcc(label)
 Network.makeAPredictionOnABatch()
-# Network.runSiameseModel(Camera=Camera(0), detectionThreshold=0.5, verificationThreshold=0.5) 
+Network.runSiameseModel(Camera=Camera(0), detectionThreshold=0.7, verificationThreshold=0.3) 

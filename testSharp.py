@@ -1,29 +1,23 @@
-from SRC.image.imageEditor import sharpen
-from SRC.image.imageLoader import loadImgAsArr
-from matplotlib import pyplot as plt
-from cv2 import cvtColor, COLOR_BGR2RGB
+import cv2 as cv
+from SRC.image.imageCapture import Camera
+from SRC.image.imageEditor import makeVarients
+import numpy as np
+Cam = Camera(0)
 
-images = []
+def run():
+  global pic
+  while True:
+    pic = Cam.readCam(False)
+    if type(pic) != type(None):
+      pic = Cam.processFace(pic)
+      if(type(pic) != type(None)):
+        cv.imshow("in", pic)
+        cv.imshow("out",np.array(makeVarients(pic,1)[0]))
+      else:
+        continue
+    else:
+      continue
+    if cv.waitKey(200) == 27:
+      exit()
 
-for i,img in enumerate(loadImgAsArr(100,True,cropOri=True)):
-  
-  pic = img[0]
-  
-  # imshow('Cam output: ', pic)
-  print(i,end="\r")
-  
-  pic = sharpen(pic,threshold=5,showSteps=False,strength=1.2,amplification = 1.03)#keep amplification as low as possible!! or the original image will shine through, can be mitigated with threshold
-  images.append(cvtColor(pic,COLOR_BGR2RGB))
-  # imshow(f'sharp output: ',pic)
-  
-
-fig = plt.figure(dpi=300)
-
-size = int(len(images)/2)
-
-for i, image in enumerate(images):
-  fig.add_subplot(size,size,i)
-  plt.imshow(image, cmap="gray")
-  plt.axis("off")
-plt.show()
-
+run()

@@ -9,8 +9,7 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
-from SRC.image.imageEditor import clearPath, modifyOriginals
-from SRC.image.imageLoader import ProcessOther
+from SRC.image.imageEditor import clearPath, makeVarients, modifyOriginals, ProcessOther
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
 from tensorflow.keras.metrics import Precision, Recall
@@ -250,11 +249,6 @@ class SiameseNeuralNetwork:
   def __init__(self, person: str = "Christoffer", loadAmount: int = 1000, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, batchSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False):
     self.person: str = person
     
-    if self.person == "Christoffer":
-      self.personName = "Chris"
-    else:
-      self.personName = self.person
-    
     if(not useDataset):
       clearPath("images\modified\Other")
     modifyOriginals(6000,varients) # Used to be loadAmount, but chaged it as we want to make as many as posible
@@ -275,7 +269,7 @@ class SiameseNeuralNetwork:
       self.siameseNetwork = makeSiameseModel()
     else:
       # Reload model 
-      self.siameseNetwork = tf.keras.models.load_model("siamesemodel" + self.personName,
+      self.siameseNetwork = tf.keras.models.load_model("siamesemodel" + self.person,
                                                   custom_objects={'L1Dist': L1Dist, 'BinaryCrossentropy': tf.losses.BinaryCrossentropy})
     
     # Gives a summary of the network
@@ -372,7 +366,7 @@ class SiameseNeuralNetwork:
     plt.show()
     
     # Replace the old model with the new trained one
-    self.siameseNetwork.save('siamesemodel' + self.personName, save_format='tf')
+    self.siameseNetwork.save('siamesemodel' + self.person, save_format='tf')
     return [trainLossResults,testAccuracyResults,trainAccuracyResults]
   
   # Makes some predictions on some data and outputs how sure it was
@@ -405,12 +399,7 @@ class SiameseNeuralNetwork:
     """
     verificationPath = 'images\\DataSiameseNetwork\\verificationImages'
     # Clear varificationImages
-    print('\n Removeing images from: '+ verificationPath)
-    for file_name in os.listdir(verificationPath):
-      # construct full file path
-      file = os.path.join(verificationPath, file_name)
-      if ".jpg" in file:
-        os.remove(file)
+    clearPath(verificationPath)
     
     # Get verify images
     pathToImagesFromPerson = os.path.join('images\original', self.person)
@@ -434,18 +423,19 @@ class SiameseNeuralNetwork:
       # Verification trigger
       if cv.waitKey(10) & 0xFF == ord('v'):
         face = Camera.processFace(frame)
-        if type(face) == np.ndarray:
-          cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
-          # Run verification
-          results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
-          if verified:
-            print("This is " + self.person)
-            print("The results are: ", results)
-            
-          else:
-            print("This is not " + self.person)
-            print("The results are: ", results)
-            
+        if type(face) != type(None):
+          face = makeVarients(face,1)[0]
+          if type(face) == np.ndarray:
+            cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
+            # Run verification
+            results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
+            if verified:
+              print("This is " + self.person)
+              print("The results are: ", results)
+              
+            else:
+              print("This is not " + self.person)
+              print("The results are: ", results)
       
       if cv.waitKey(10) & 0xFF == ord('q'):
         break

@@ -5,34 +5,35 @@ from SRC.AI.knn.point import Point
 from SRC.AI.knn.distanceStorage import Distance as dist
 from SRC.AI.knn.distanceStorage import checkDist, getFirst
 import time as Time
+from typing import List
 
-global distances
-distances:list[dist] = []
+distances:List[dist] = []
+
 def clearDist():
   global distances
   distances.clear()
 
-def addDist(test:Point,points:list[Point],CalcID:int):
+def addDist(test:Point,points:List[Point],CalcID:int):
   global distances
   for i in points:
       if i != test:
         distances.append(dist(i,test.distance(CalcID,i)))#calculate the distance
 
 class Knn:
-  def __init__(self,knownDataType:list[Point],k:int = 5,distID:int = 0, threads:int = 1) -> None:
+  def __init__(self,knownDataType:List[Point],k:int = 5,distID:int = 0, threads:int = 1) -> None:
     self.k = k
-    self.ori:list[Point] = knownDataType#saves original know data, this ensures that you can run a test on multiple k
-    self.referencePoints:list[Point] = knownDataType#contains all calculated points of differentTypes
+    self.ori:List[Point] = knownDataType#saves original know data, this ensures that you can run a test on multiple k
+    self.referencePoints:List[Point] = knownDataType#contains all calculated points of differentTypes
     self.distanceCalcID = distID#which formula should be used to calculate distance
     self.threads = threads
   
-  def UpdateDataset(self,data:list[Point],solution:Union[list[str], str] = "lime")->None:
+  def UpdateDataset(self,data:List[Point],solution:Union[List[str], str] = "lime")->None:
     if type(solution) == str:
       solution = [solution]*(len(data))
       #in case no solution is give generates a buffer that is not meant to be read but can be read as a way to know results
     
-    self.data = data #data pieces containing a list of points
-    self.solution:list[str] = solution#solution to data piece of index x #true means type 1, false means type 2
+    self.data = data #data pieces containing a List of points
+    self.solution:List[str] = solution#solution to data piece of index x #true means type 1, false means type 2
     self.error = [False]*(len(self.solution))
   
   def distance(self,item0:Point,item1:Point) -> int:
@@ -43,7 +44,7 @@ class Knn:
     for i,toBeTested in enumerate(self.data): #datapoint being checked
       time = Time.mktime(Time.localtime())
       print(str(i) + "/" + str(len(self.data)) + "\r",end="")
-      distances:list[dist] = self.calculateDistances(toBeTested)
+      distances:List[dist] = self.calculateDistances(toBeTested)
       
       #sorts after best
       distances.sort(key=checkDist)
@@ -60,7 +61,7 @@ class Knn:
       print("timeSpent:", Time.mktime(Time.localtime())-time)
     return
   
-  def findIndividualLabels(self, labels:list[str]) -> list[str]:
+  def findIndividualLabels(self, labels:List[str]) -> List[str]:
     foundLabels = []
     for i in labels:
       exists = False
@@ -72,9 +73,9 @@ class Knn:
         foundLabels.append(i)
     return foundLabels
   
-  def calculateDistances(self, test:Point) -> list[dist]:
+  def calculateDistances(self, test:Point) -> List[dist]:
     length = len(self.referencePoints)/self.threads
-    t:list[threading.Thread] = []
+    t:List[threading.Thread] = []
     clearDist()
     for i in range(self.threads):
       t.append(threading.Thread(name="calculator:"+str(i+1)+"\\" + str(self.threads),target=addDist,args=(test,self.referencePoints[int(i*length):int((i+1)*length)],self.distanceCalcID)))
@@ -102,7 +103,7 @@ class Knn:
       print ((len(self.solution) - e) / len(self.solution),"percent correct")
     return e
   
-  def testK(self,rangeOfK: range = -1) -> list[Point]:#test's for different k's on the current ori(original know points) and currently active dataset 
+  def testK(self,rangeOfK: range = -1) -> List[Point]:#test's for different k's on the current ori(original know points) and currently active dataset 
     if rangeOfK == -1 :#sets a default range of k
       rangeOfK = range(1,8,2)
     

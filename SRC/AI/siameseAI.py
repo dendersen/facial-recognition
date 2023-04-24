@@ -423,19 +423,19 @@ class SiameseNeuralNetwork:
       # Verification trigger
       if cv.waitKey(10) & 0xFF == ord('v'):
         face = Camera.processFace(frame)
-        face = makeVarients(face,1)[0]
-        if type(face) == np.ndarray:
-          cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
-          # Run verification
-          results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
-          if verified:
-            print("This is " + self.person)
-            print("The results are: ", results)
-            
-          else:
-            print("This is not " + self.person)
-            print("The results are: ", results)
-            
+        if type(face) != type(None):
+          face = makeVarients(face,1)[0]
+          if type(face) == np.ndarray:
+            cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
+            # Run verification
+            results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
+            if verified:
+              print("This is " + self.person)
+              print("The results are: ", results)
+              
+            else:
+              print("This is not " + self.person)
+              print("The results are: ", results)
       
       if cv.waitKey(10) & 0xFF == ord('q'):
         break

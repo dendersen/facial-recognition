@@ -1,3 +1,4 @@
+import math
 from SRC.image.imageSaver import saveImage
 from SRC.image.imageLoader import ProcessOther, loadImgAsArr
 from typing import List, Tuple
@@ -132,53 +133,64 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
 
 def sharpen(pic: List[List[List[int]]], strength: float = 0.2, threshold: int = -1, showSteps: bool = False, showEnd: bool = False, amplification: float = 1):
   pic = np.array(pic)
-  process = smooth(pic, threshold)
-  if showSteps:
-    cv.imshow('smooth output:', cv.convertScaleAbs(process.astype(np.uint8)))
+  coarse = gaussianKernel(pic.copy(), (3,3),2)
+  if(showSteps):
+    cv.imshow("coarse",coarse)
+  fine = cv.subtract(pic,coarse)
+  if(showSteps):
+    cv.imshow("fine",np.clip(cv.multiply(fine,(np.ones_like(fine)*strength).astype(np.uint8)),0,255))
+  sharp = cv.addWeighted(pic.astype(int),1,fine.astype(int),strength,0).astype(np.uint8)
+  if(showEnd):
+    cv.imshow("sharp",sharp)
+  return sharp
+  # if showSteps:
+  #   cv.imshow('smooth output:', cv.convertScaleAbs(process.astype(np.uint8)))
 
-  process = difference(pic, process, amplification, threshold)
-  if showSteps:
-    cv.imshow('detail output:', cv.convertScaleAbs(cv.multiply(process.copy().astype(np.uint8), np.ones_like(pic) * 2)))
+  # process = difference(pic, process, amplification, threshold)
+  # if showSteps:
+  #   cv.imshow('detail output:', cv.convertScaleAbs(cv.multiply(process.copy().astype(np.uint8), np.ones_like(pic) * 2)))
 
-  pic = combine(pic, process, strength, threshold)
-  if showEnd:
-    cv.imshow('sharp output:', cv.convertScaleAbs(pic.astype(np.uint8)))
+  # pic = combine(pic, process, strength, threshold)
+  # if showEnd:
+  #   cv.imshow('sharp output:', cv.convertScaleAbs(pic.astype(np.uint8)))
 
-  return cv.convertScaleAbs(pic)
+  # return cv.convertScaleAbs(pic)
 
-def smooth(pic, threshold: int = -1, strong: float = 1.0, central: float = 1.0):
-  orgPic = pic.copy()
-  kernel = np.array([[strong, strong, strong],
-                    [strong, central, strong],
-                    [strong, strong, strong]]) / (central + 8 * strong)
-  tempList = cv.filter2D(orgPic, -1, kernel)
+# Gaussian kernel function
+def gaussianKernel(img:List[List[List[np.uint8]]],size:Tuple[int], spread:float):
+  kernel = np.zeros(size,dtype=np.float32)
+  k = (size[0] - 1) // 2
 
-  if threshold > 0:
-      mask = (tempList / orgPic) < (threshold / 255.0)
-      tempList[mask] = orgPic[mask]
+  for i in range(size[0]):
+    for j in range(size[1]):
+      x = i - k
+      y = j - k
+      kernel[i, j] = (1/(2*math.pi*spread**2)) * math.exp(-(x**2 + y**2) / (2 * spread**2))
 
-  return tempList
+  return cv.filter2D(img, -1, kernel /kernel.sum()).astype(np.uint8)
 
-def difference(pic1, pic2, amplification: float = 1, threshold: int = 0):
-  # Apply a Gaussian blur to reduce noise
+# Custom Gaussian blur function
 
-  pic1_blurred = cv.GaussianBlur(pic1, (3, 3), 0)
-  pic2_blurred = cv.GaussianBlur(pic2, (3, 3), 0)
-  temp = np.clip((pic1_blurred.astype(np.float32) - (pic2_blurred.astype(np.float32) * amplification)), -255, 255).astype(int)
+# def difference(pic1, pic2, amplification: float = 1, threshold: int = 0):
+#   # Apply a Gaussian blur to reduce noise
 
-  if threshold > 0:
-      eps = 1e-8
-      mask = np.abs((temp + eps) / (pic1 + eps)) < (threshold/255.0)
-      temp[mask] = np.zeros_like(pic1)[mask]
+#   pic1_blurred = cv.GaussianBlur(pic1, (3, 3), 0)
+#   pic2_blurred = cv.GaussianBlur(pic2, (3, 3), 0)
+#   temp = np.clip((pic1_blurred.astype(np.float32) - (pic2_blurred.astype(np.float32) * amplification)), -255, 255).astype(int)
 
-  return temp
+#   if threshold > 0:
+#       eps = 1e-8
+#       mask = np.abs((temp + eps) / (pic1 + eps)) < (threshold/255.0)
+#       temp[mask] = np.zeros_like(pic1)[mask]
 
-def combine(pic1, pic2, strength: float, threshold: int = 0):
-  temp = np.clip(pic1.astype(np.float32) + pic2.astype(np.float32) * strength, 0, 255).astype(np.uint8)
+#   return temp
 
-  if threshold > 0:
-      eps = 1e-8
-      mask = np.abs((temp + eps) / (pic1 + eps)) < (threshold/255.0)
-      temp[mask] = pic1[mask]
-  
-  return temp
+# def combine(pic1, pic2, strength: float, threshold: int = 0):
+#   temp = np.clip(pic1.astype(np.float32) + pic2.astype(np.float32) * strength, 0, 255).astype(np.uint8)
+
+#   if threshold > 0:
+#       eps = 1e-8
+#       mask = np.abs((temp + eps) / (pic1 + eps)) < (threshold/255.0)
+#       temp[mask] = pic1[mask]
+
+#   return temp

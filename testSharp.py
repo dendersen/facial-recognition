@@ -1,9 +1,6 @@
 import cv2 as cv
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QSlider, QPushButton, QHBoxLayout
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from SRC.image.imageCapture import Camera
-from SRC.image.imageEditor import sharpen
-
+from SRC.image.imageEditor import linearSharpen
 Cam = Camera(0)
 
 class SliderWindow(QWidget):

@@ -11,23 +11,7 @@ import random
 import cv2 as cv
 from PIL import Image
 from SRC.image.imageCapture import Camera
-
-def printProgressBar(iteration, total, start_time, prefix='Progress:', suffix='Complete', length=50, fill='█'):
-  total -= 1
-  elapsed_time = time.time() - start_time
-  progress = iteration / float(total)
-  estimated_time = elapsed_time / progress if progress > 0 else 0
-  remaining_time = estimated_time - elapsed_time
-
-  percent = ('{0:.1f}').format(100 * progress)
-  filled_length = int(length * iteration // total)
-  bar = fill * filled_length + '-' * (length - filled_length)
-  time_str = 'Remaining: {0:.1f}s'.format(remaining_time)
-  count_str = '{}/{}'.format(iteration, total)
-
-
-  sys.stdout.write('\r%s |%s| %s%% %s %s %s' % (prefix, bar, percent, count_str, time_str, suffix))
-  sys.stdout.flush()
+from SRC.progBar import printProgressBar
 
 def noise(img: List[List[List[int]]], deviation: int) -> List[List[List[int]]]:
   img = np.array(img)
@@ -116,7 +100,7 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
   clearPath('images\\modified\\Christoffer')
   clearPath('images\\modified\\Niels')
   clearPath('images\\modified\\David')
- 
+  
   print("done clearing")
   
   IDChris = 0
@@ -163,12 +147,12 @@ def getLabeledFaces():
   # Uncompress Tar GZ Labelled faces in the wild
   with tarfile.open('lfw.tgz', "r:gz") as tar:
     print(f'\n Adding extra images to: {forDatasetPath} : From Untar Labelled Faces in the Wild Dataset')
-    progbar = tf.keras.utils.Progbar(len(tar.getmembers()))
+    start_time = time.time()
     i = 0
     # Move LFW Images to the following repository data/negative
     for member in tar.getmembers():
       i = i+1
-      progbar.update(i)
+      printProgressBar(i,len(tar.getmembers()),start_time)
       if member.name.endswith(".jpg") or member.name.endswith(".png"):
         member.name = os.path.basename(member.name)
         tar.extract(member, forDatasetPath)

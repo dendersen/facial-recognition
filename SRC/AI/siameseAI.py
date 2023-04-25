@@ -7,11 +7,12 @@ import cv2 as cv
 import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
+from SRC.progBar import progBar
 
-from SRC.image.imageEditor import clearPath, makeVarients, modifyOriginals, ProcessOther
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
-from tensorflow.keras.metrics import Precision, Recall
+from SRC.image.imageEditor import clearPath, makeVarients, modifyOriginals, getLabeledFaces
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.layers import Layer, Conv2D, Dense, MaxPooling2D, Input, Flatten
+from tensorflow.python.keras.metrics import Precision
 
 # Avoid out of memory errors by setting GPU Memory Consumption Growth
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -33,43 +34,33 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
   
   # Get all negative data
   for name in ["Christoffer","Niels","David","Other"]:
-    i = 0
     if name != person:
       print('\n Adding images to: '+ negPath +' : from: images\modified\\' + name)
-      progbar = tf.keras.utils.Progbar(len(os.listdir('images\modified\\' + name))-1)
-      for picture in os.listdir('images\\modified\\' + name):
+      progbar = progBar(len(os.listdir('images\modified\\' + name)))
+      for i,picture in enumerate(os.listdir('images\\modified\\' + name)):
         if ".jpg" in picture:
           path = os.path.join('images\modified', name, picture)
           img = cv.imread(path)
           newPath = os.path.join(negPath, name + "_" + picture)
           cv.imwrite(newPath, img)
-          i = i+1
-          progbar.update(i)
-
+          progbar.print(i)
+  
   
   # Get all anchor data and positive data
   datapath = os.path.join('images/modified/', person)
-  i = 0
   
   print('\n Adding images to: '+ posPath +' and '+ ancPath +' : from: '+ datapath)
-  progbar = tf.keras.utils.Progbar(len(os.listdir(datapath)))
-  j = 0
-  for picture in os.listdir(datapath):
+  progbar = progBar(len(os.listdir(datapath)))
+  for i,picture in enumerate(os.listdir(datapath)):
     if ".jpg" in picture:
+      path = os.path.join(datapath, picture)
+      newPath = os.path.join(ancPath, picture)
       if i % 2 == 0:
-        path = os.path.join(datapath, picture)
         img = cv.imread(path)
-        newPath = os.path.join(ancPath, picture)
-        cv.imwrite(newPath, img)
-        i = i+1
       else:
-        path = os.path.join(datapath, picture)
-        img = cv.imread(path)
         newPath = os.path.join(posPath, picture)
-        cv.imwrite(newPath, img)
-        i = i+1
-    j = j+1
-    progbar.update(j)
+      cv.imwrite(newPath, img)
+    progbar.print(i)
 
 # loades the image
 def preprocess(filePath):
@@ -151,7 +142,7 @@ def makeImbedding():
 
 class L1Dist(Layer):
   
-  def __init__(self, **kwargs):
+  def __init__(self):
     super().__init__()
   
   # compare embeddings - similarity calculation
@@ -298,7 +289,7 @@ class SiameseNeuralNetwork:
       testepochAccuracy = tf.keras.metrics.BinaryAccuracy()
       
       print('\n Epoch {}/{}'.format(epoch+1,EPOCHS))
-      progbar = tf.keras.utils.Progbar(len(self.trainingData))
+      progbar = progbar(len(self.trainingData))
       
       # Loop through each batch
       for idx, batch in enumerate(self.trainingData):
@@ -315,7 +306,7 @@ class SiameseNeuralNetwork:
         y = batch[2]
         epochAccuracy.update_state(y, self.siameseNetwork(X, training=True))
         # Update progbar
-        progbar.update(idx+1)
+        progbar.print(idx+1)
       
       for batch in self.testData:
         X = batch[:2]

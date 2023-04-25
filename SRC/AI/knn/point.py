@@ -4,7 +4,7 @@ from typing import List
 class Point:pass
 
 class Point:
-  def __init__(self,location:list[float],label:str = "lime") -> None:
+  def __init__(self,location:List[float],label:str = "lime") -> None:
     self.location = location
     self.label = label
     self.dist = [self.euclid,self.manhattan,self.chebyshev,self.hammingManhattan,self.hammingEuclid,self.hammingChebyshev]

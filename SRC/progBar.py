@@ -4,7 +4,7 @@ from time import time
 
 
 class progBar():
-  def __init__(self, total:Union(float,int),startTime:int = None, prefix:str='Progress:',length:int=50,fill:str='█') -> None:
+  def __init__(self, total:Union[float,int],startTime:int = None, prefix:str='Progress:',length:int=50,fill:str='█') -> None:
     self.total = total-1
     if(type(startTime) != type(None)):
       self.startTime = startTime
@@ -14,28 +14,36 @@ class progBar():
     self.prefix = prefix
     self.length = length
     self.fill = fill
+    self.iteration = 0
     pass
   
   def print(self,iteration, suffix="Complete"):
-
+    self.iteration = iteration
     elapsed_time = time() - self.startTime
-    progress = iteration / float(self.total)
+    progress = self.iteration / float(self.total)
+    if(progress == 0):
+      progress = 1e-8
     remaining_time = (elapsed_time / progress) - elapsed_time
     
     percent = ('{0:.1f}').format(100 * progress)
-    filled_length = int(self.length * iteration / self.total)
+    filled_length = int(self.length * self.iteration / self.total)
     bar = self.fill * filled_length + '-' * (self.length - filled_length)
     time_str = 'Remaining: {0:.1f}s'.format(remaining_time)
-    count_str = '{}/{}'.format(iteration, self.total)
+    count_str = '{}/{}'.format(self.iteration, self.total)
     
     sys.stdout.write('\r%s |%s| %s%% %s %s %s' % (self.prefix, bar, percent, count_str, time_str, suffix))
     sys.stdout.flush()
+  def incriment(self,suffix:str = "Complete"):
+    self.iteration += 1
+    self.print(self.iteration,suffix)
 
 
 def printProgressBar(iteration, total, start_time, prefix='Progress:', suffix='Complete', length=50, fill='█'):
   total -= 1
   elapsed_time = time() - start_time
   progress = iteration / float(total)
+  if(progress == 0):
+    progress = 1e-8
   remaining_time = (elapsed_time / progress) - elapsed_time
 
   percent = ('{0:.1f}').format(100 * progress)

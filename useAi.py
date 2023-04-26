@@ -180,7 +180,6 @@ modelNumber = chooseModel()
 
 if modelNumber == 1:
     useKNN()
-    pass
 
 if modelNumber == 2:
     useSimpleNeuralNetwork()

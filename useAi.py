@@ -26,9 +26,9 @@ def takePic(camera: IC.Camera):
     BGRface = camera.processFace(pic)
     if type(BGRface) == np.ndarray:
         # save original face
-        # RGBface = cv.cvtColor(BGRface, cv.COLOR_BGR2RGB)
-        BGRface = cv.resize(BGRface,(100,100))
-        return BGRface
+        RGBface = cv.cvtColor(BGRface, cv.COLOR_BGR2RGB)
+        RGBface = cv.resize(RGBface,(100,100))
+        return RGBface
     else:
         print("ERROR: Face was not np.ndarray")
 
@@ -147,6 +147,7 @@ def useSiameseNeuralNetwork():
         camera.readCam()
         if cv.waitKey(10) == 32: # wait for spacebar to be pressed
             image = takePic(camera)
+            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
             if(image is None):
                 continue 
             # image = makeVarients(image,1)[0]

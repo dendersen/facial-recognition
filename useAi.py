@@ -164,15 +164,12 @@ def useSiameseNeuralNetwork():
             print(f"I am {sikkerhed2*100:.1f} sure that this i David\nThe results was: {results2:.1f}\n")
             print(f"I am {sikkerhed3*100:.1f} sure that this i Niels\nThe results was: {results3:.1f}\n")
             if fullResult1 or fullResult2 or fullResult3:
-                
-                
                 if sikkerhed1 > sikkerhed2 and sikkerhed1 > sikkerhed3:
                     print("This is most likely Christoffer")
                 elif sikkerhed2 > sikkerhed1 and sikkerhed2 > sikkerhed3:
                     print("This is most likely David")
                 else:
                     print("This is most likely Niels")
-                
             else:
                 print("This is not someone i know!")
         

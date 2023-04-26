@@ -153,14 +153,17 @@ def useSiameseNeuralNetwork():
             (results1, fullResult1) = Network1.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
             if fullResult1:
                 print("This is Christoffer, the results was: ", results1)
+                continue
             
             (results2, fullResult2) = Network2.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
             if fullResult2:
                 print("This is David, the results was: ", results2)
+                continue
             
             (results3, fullResult3) = Network3.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
             if fullResult3:
                 print("This is Niels, the results was: ", results3)
+                continue
             
             print("This is not someone i know!")
         

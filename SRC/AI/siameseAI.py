@@ -389,7 +389,7 @@ class SiameseNeuralNetwork:
     pathToImagesFromPerson = os.path.join('images\original', self.person)
     print('\n Adding 10 random images to: '+ verificationPath +' : from: '+ pathToImagesFromPerson)
     
-    highestID = len(os.listdir(pathToImagesFromPerson))
+    highestID = len(os.listdir(pathToImagesFromPerson))-2
     
     for i in range(10):
       path = os.path.join(pathToImagesFromPerson, str(random.randint(0,highestID))+'.jpg')

@@ -147,9 +147,9 @@ def useSiameseNeuralNetwork():
         camera.readCam()
         if cv.waitKey(10) == 32: # wait for spacebar to be pressed
             image = takePic(camera)
-            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
             if(image is None):
                 continue 
+            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
             # image = makeVarients(image,1)[0]
             (results1, fullResult1) = Network1.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
             

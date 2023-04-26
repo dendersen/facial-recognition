@@ -8,7 +8,7 @@ import SRC.image.imageLoader as IL
 from SRC.image.imageEditor import modifyOriginals
 from SRC.image.imageCapture import Camera
 from SRC.progBar import progBar
-
+from PIL import Image
 def makePoint(thing: Tuple[List[List[List[int]]],str]) -> Point:
   return Point([color for x in thing[0] for y in x for color in y],thing[1])
 
@@ -46,8 +46,10 @@ def getPic():
       if type(BGRface) == np.ndarray:
           # save original face
           RGBface = cv.cvtColor(BGRface, cv.COLOR_BGR2RGB)
-          print("This is the shape of the face picture: ", RGBface.shape)
-          return RGBface
+          RGBface = Image.fromarray(RGBface)
+          RGBface = RGBface.crop((10,10,110,110))
+          RGBface = RGBface.resize((100,100))
+          return np.array(RGBface)
 
 def getYN(msg:str) -> bool:
   return input(msg + " Y/N: ").capitalize() == "Y"
@@ -58,12 +60,11 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
     ori = getYN("should original images be used")
   
   mod = useModified
-  if(useModified == None and ori):
+
+  if(type(useModified) == type(None)):
     mod = getYN("should modified images  be used")
   elif(not ori):
     mod = True
-  else:
-    mod = getYN("should modified images  be used")
   
   if(makeModified):
     modifyOriginals()
@@ -88,8 +89,8 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
     k = Knn(all.copy(),distID=distID,threads=threadCount)
     k.UpdateDataset([makePoint((getPic(),"UnKnown"))],[getValidLabel("who is this a picture of? ")])
   else:
-    known = all[0:floor(len(all)*distribution)].copy()
-    unkown = all[::-1][0:floor(len(all)*(1-distribution))].copy()
+    known = all[0:floor(len(all)*(1-distribution))].copy()
+    unkown = all[::-1][0:floor(len(all)*distribution)].copy()
     
     k = Knn(known,distID=distID,threads=threadCount)
     k.UpdateDataset(unkown,[i.label for i in unkown])

@@ -160,9 +160,9 @@ def useSiameseNeuralNetwork():
             sikkerhed1 = np.median(results1)
             sikkerhed2 = np.median(results2)
             sikkerhed3 = np.median(results3)
-            print(f"I am {np.median(sikkerhed1)*100} sure that this i Christoffer\nThe results was: {results1}\n")
-            print(f"I am {np.median(sikkerhed2)*100} sure that this i David\nThe results was: {results2}\n")
-            print(f"I am {np.median(sikkerhed3)*100} sure that this i Niels\nThe results was: {results3}\n")
+            print(f"I am {np.median(sikkerhed1)*100:.1f} sure that this i Christoffer\nThe results was: {results1:.1f}\n")
+            print(f"I am {np.median(sikkerhed2)*100:.1f} sure that this i David\nThe results was: {results2:.1f}\n")
+            print(f"I am {np.median(sikkerhed3)*100:.1f} sure that this i Niels\nThe results was: {results3:.1f}\n")
             if fullResult1 or fullResult2 or fullResult3:
                 
                 

@@ -20,7 +20,8 @@ class progBar():
   
   def print(self,iteration, suffix=""):
     elapsed_time = time() - self.startTime
-    self.iteration = iteration+1
+
+    self.iteration = iteration
     progress = self.iteration / float(self.total)
     if(progress == 0):
       progress = 1e-8
@@ -34,7 +35,7 @@ class progBar():
     sys.stdout.write(f'\r{self.prefix} |{bar}| {percent}% {count_str} {time_str} {suffix}')
     sys.stdout.flush()
   
-  def incriment(self,suffix:str = "Complete"):
+  def incriment(self,suffix:str = ""):
     self.iteration += 1
     self.print(self.iteration,suffix)
 

@@ -61,7 +61,7 @@ class Knn:
       #saves best label
       toBeTested.label = labelCounts[0][1]
       self.referencePoints.append(toBeTested)
-      progbar.print(i,suffix="      \n")
+    progbar.incriment(suffix="      \n")
     print("")
     return
   

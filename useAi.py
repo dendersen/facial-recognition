@@ -149,23 +149,18 @@ def useSiameseNeuralNetwork():
             image = takePic(camera)
             if(image is None):
                 continue 
-            image = makeVarients(image,1)[0]
+            # image = makeVarients(image,1)[0]
             (results1, fullResult1) = Network1.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
-            if fullResult1:
-                print("This is Christoffer, the results was: ", results1)
-                continue
             
             (results2, fullResult2) = Network2.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
-            if fullResult2:
-                print("This is David, the results was: ", results2)
-                continue
             
             (results3, fullResult3) = Network3.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
-            if fullResult3:
-                print("This is Niels, the results was: ", results3)
-                continue
-            
-            print("This is not someone i know!")
+            if fullResult1 or fullResult2 or fullResult3:
+                print(f"I am {np.median(results1)} sure that this i Christoffer\nThe results was: {results1}\n")
+                print(f"I am {np.median(results2)} sure that this i David\nThe results was: {results2}\n")
+                print(f"I am {np.median(results3)} sure that this i Niels\nThe results was: {results3}")
+            else:
+                print("This is not someone i know!")
         
         if cv.waitKey(10) == 27: #Stop on esc 
             print("stop")

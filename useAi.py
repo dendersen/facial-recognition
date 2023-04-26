@@ -186,10 +186,3 @@ if modelNumber == 2:
 
 if modelNumber == 3:
     useSiameseNeuralNetwork()
-
-# saveData(*Network.train(100),label=label)
-# modelAcc(label)
-# Network.makeAPredictionOnABatch()
-
-
-

@@ -18,7 +18,7 @@ def addDist(test:Point,points:List[Point],CalcID:int):
   global distances, calcBar
   for i in points:
       if i != test:
-        calcBar.incriment(suffix="Complete    ")
+        calcBar.incriment(suffix="      ")
         distances.append(dist(i,test.distance(CalcID,i)))#calculate the distance
 
 class Knn:
@@ -42,11 +42,10 @@ class Knn:
     return item0.distance(self.distanceCalcID,item1)#calls the distance method contained in the class point
   
   def runData(self) -> None:#runs the algorithm through all unkown points
-    progbar = progBar(len(self.data),prefix="all calculations:")
+    progbar = progBar(len(self.data),prefix="\033[Aall calculations:")
     print("\n")
     for i,toBeTested in enumerate(self.data): #datapoint being checked
-      print("\033[A",end="")
-      progbar.print(i,suffix="Complete\n")
+      progbar.print(i,suffix="      \n")
       
       distances:List[dist] = self.calculateDistances(toBeTested)
       
@@ -62,6 +61,8 @@ class Knn:
       #saves best label
       toBeTested.label = labelCounts[0][1]
       self.referencePoints.append(toBeTested)
+      progbar.print(i,suffix="      \n")
+    print("")
     return
   
   def findIndividualLabels(self, labels:List[str]) -> List[str]:
@@ -99,10 +100,10 @@ class Knn:
       if i.label != j:
         e+=1
     if(len(self.solution) == 1):
-      print("guess =",self.referencePoints[::-1][0].label, ", correct =",self.solution[::-1][0])
+      print("\nguess =",self.referencePoints[::-1][0].label, ", correct =",self.solution[::-1][0])
       print(msg)
     else:
-      print ((len(self.solution) - e) / len(self.solution),"percent correct")
+      print ("current K: ",self.k, "|" ,((len(self.solution) - e) / len(self.solution))*100,"percent correct\n")
     return e
   
   def testK(self,rangeOfK: range = -1) -> List[Point]:#test's for different k's on the current ori(original know points) and currently active dataset 
@@ -113,7 +114,7 @@ class Knn:
       (self.buildInternalKNN(i,self.distanceCalcID))
     return
   
-  def buildInternalKNN(self, k, dist, simple = 0):
+  def buildInternalKNN(self, k, dist):
       k_nn = Knn([*self.ori.copy()],k,dist,self.threads)#creates a new knn algorithm with a new k and dist
       k_nn.UpdateDataset(self.data.copy(),self.solution.copy())#provides the algorithem with data
       k_nn.runData()#runs the algorithm

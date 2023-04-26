@@ -222,23 +222,24 @@ def showSiameseBatch(testInput, testVal, yTrue, yHat, person):
   plt.show()
 
 class SiameseNeuralNetwork:
-  def __init__(self, person: str = "Christoffer", loadAmount: int = 1000, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, batchSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False):
+  def __init__(self, person: str = "Christoffer", loadOurData:bool = True, loadAmount: int = 1000, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, batchSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False, networkSummary:bool = True):
     self.person: str = person
     
     if(not useDataset):
       clearPath("images\modified\Other")
-    modifyOriginals(6000,varients)
     
-    rewriteDataToMatchNetwork(person=self.person, reprocessDataset = reprocessDataset)
-    
-    # Optimizer and loss
-    self.lossObject = tf.losses.BinaryCrossentropy(from_logits=False)
-    self.optimizer = tf.keras.optimizers.SGD(learning_rate, momentum=0.9)
-    
-    # Get data from files
-    (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=batchSize)
-    self.trainingData = self.trainingData.prefetch(tf.data.experimental.AUTOTUNE)
-    self.testData = self.testData.prefetch(tf.data.experimental.AUTOTUNE)
+    self.loadOurData = loadOurData
+    if loadOurData:
+      modifyOriginals(6000,varients)
+      rewriteDataToMatchNetwork(person=self.person, reprocessDataset = reprocessDataset)
+      # Get data from files
+      (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=batchSize)
+      self.trainingData = self.trainingData.prefetch(tf.data.experimental.AUTOTUNE)
+      self.testData = self.testData.prefetch(tf.data.experimental.AUTOTUNE)
+      
+      # Optimizer and loss
+      self.lossObject = tf.losses.BinaryCrossentropy(from_logits=False)
+      self.optimizer = tf.keras.optimizers.SGD(learning_rate, momentum=0.9)
     
     if resetNetwork:
       self.siameseNetwork = makeSiameseModel()
@@ -246,10 +247,16 @@ class SiameseNeuralNetwork:
       # Reload model 
       self.siameseNetwork = tf.keras.models.load_model("siamesemodelBest" + self.person)
     
-    # Gives a summary of the network
-    self.siameseNetwork.summary()
+    if networkSummary:
+      # Gives a summary of the network
+      self.siameseNetwork.summary()
   
   def train(self, EPOCHS: int = 10) -> List[List[float]]:
+    if (not self.loadOurData):
+      print("Network must load data to train")
+      return [None]
+    
+    
     # Keep results for plotting
     trainLossResults = []
     trainAccuracyResults = []
@@ -345,6 +352,8 @@ class SiameseNeuralNetwork:
   
   # Makes some predictions on some data and outputs how sure it was
   def makeAPredictionOnABatch(self):
+    if (not self.loadOurData):
+      return print("Network must load data to be able to predict")
     testInput, testVal, yTrue = self.testData.as_numpy_iterator().next()
     yHat = self.siameseNetwork.predict([testInput, testVal])
     # Post processing the results 
@@ -364,10 +373,11 @@ class SiameseNeuralNetwork:
     
     return predictions
   
-  def runSiameseModel(self,Camera, detectionThreshold: float = 0.5, verificationThreshold: float = 0.5):
+  def runSiameseModel(self, Camera, image, detectionThreshold: float = 0.5, verificationThreshold: float = 0.5):
     """Runs the siamese model you are currently working on
     Args:
         Camera: Takes an instance of the class Cam from imageCapture, e.g Cam(0)
+        Image: Takes in a picture of a person to verify
     Returns:
       True if you are verified and false if not
     """
@@ -387,29 +397,36 @@ class SiameseNeuralNetwork:
       newPath = os.path.join(verificationPath, str(len(os.listdir(verificationPath)))+'.jpg')
       cv.imwrite(newPath, img)
     
-    
-    # Initialize a Cam class
-    Camera = Camera
-    
-    while True:
-      frame = Camera.readCam()
+    if (not Camera == None):
+      # Initialize a Cam class
+      Camera = Camera
       
-      # Verification trigger
-      if cv.waitKey(10) & 0xFF == ord('v'):
-        face = Camera.processFace(frame)
-        if type(face) != type(None):
-          face = makeVarients(face,1)[0]
-          if type(face) == np.ndarray:
-            cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
-            # Run verification
-            results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
-            if verified:
-              print("This is " + self.person)
-              print("The results are: ", results)
-            else:
-              print("This is not " + self.person)
-              print("The results are: ", results)
+      while True:
+        frame = Camera.readCam()
+        
+        # Verification trigger
+        if cv.waitKey(10) & 0xFF == ord('v'):
+          face = Camera.processFace(frame)
+          if type(face) != type(None):
+            face = makeVarients(face,1)[0]
+            if type(face) == np.ndarray:
+              cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
+              # Run verification
+              results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
+              if verified:
+                print("This is " + self.person)
+                print("The results are: ", results)
+              else:
+                print("This is not " + self.person)
+                print("The results are: ", results)
+        
+        if cv.waitKey(10) & 0xFF == ord('q'):
+          break
+      cv.destroyAllWindows()
+    
+    if type(image) == np.ndarray: 
+      cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), image)
+      # Run verification
+      results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
       
-      if cv.waitKey(10) & 0xFF == ord('q'):
-        break
-    cv.destroyAllWindows()
+      return (results, verified)

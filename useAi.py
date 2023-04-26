@@ -162,9 +162,9 @@ def useSiameseNeuralNetwork():
                 sikkerhed2 = np.median(results2)
                 sikkerhed3 = np.median(results3)
                 
-                print(f"I am {np.median(sikkerhed1)} sure that this i Christoffer\nThe results was: {results1}\n")
-                print(f"I am {np.median(sikkerhed2)} sure that this i David\nThe results was: {results2}\n")
-                print(f"I am {np.median(sikkerhed3)} sure that this i Niels\nThe results was: {results3}\n")
+                print(f"I am {np.median(sikkerhed1)*100} sure that this i Christoffer\nThe results was: {results1}\n")
+                print(f"I am {np.median(sikkerhed2)*100} sure that this i David\nThe results was: {results2}\n")
+                print(f"I am {np.median(sikkerhed3)*100} sure that this i Niels\nThe results was: {results3}\n")
                 
                 if sikkerhed1 > sikkerhed2 and sikkerhed1 > sikkerhed3:
                     print("This is most likely Christoffer")

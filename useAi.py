@@ -8,6 +8,7 @@ from typing import List
 from SRC.image.imageCapture import Camera
 from SRC.AI.siameseAI import SiameseNeuralNetwork
 import pandas as pd
+from SRC.image.imageEditor import makeVarients
 
 def chooseModel() -> int:
     answer = input()
@@ -30,7 +31,6 @@ def takePic(camera: IC.Camera):
         return BGRface
     else:
         print("ERROR: Face was not np.ndarray")
-        
 
 # works for simple Neural network
 def identifyImage(image, model):
@@ -149,7 +149,7 @@ def useSiameseNeuralNetwork():
             image = takePic(camera)
             if(image is None):
                 continue 
-            
+            image = makeVarients(image,1)[0]
             (results1, fullResult1) = Network1.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
             if fullResult1:
                 print("This is Christoffer, the results was: ", results1)

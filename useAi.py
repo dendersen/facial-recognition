@@ -156,9 +156,22 @@ def useSiameseNeuralNetwork():
             
             (results3, fullResult3) = Network3.runSiameseModel(Camera=None, image = image, detectionThreshold=0.5, verificationThreshold=0.5)
             if fullResult1 or fullResult2 or fullResult3:
-                print(f"I am {np.median(results1)} sure that this i Christoffer\nThe results was: {results1}\n")
-                print(f"I am {np.median(results2)} sure that this i David\nThe results was: {results2}\n")
-                print(f"I am {np.median(results3)} sure that this i Niels\nThe results was: {results3}")
+                
+                sikkerhed1 = np.median(results1)
+                sikkerhed2 = np.median(results2)
+                sikkerhed3 = np.median(results3)
+                
+                print(f"I am {np.median(sikkerhed1)} sure that this i Christoffer\nThe results was: {results1}\n")
+                print(f"I am {np.median(sikkerhed2)} sure that this i David\nThe results was: {results2}\n")
+                print(f"I am {np.median(sikkerhed3)} sure that this i Niels\nThe results was: {results3}\n")
+                
+                if sikkerhed1 > sikkerhed2 and sikkerhed1 > sikkerhed3:
+                    print("This is most likely Christoffer")
+                elif sikkerhed2 > sikkerhed1 and sikkerhed2 > sikkerhed3:
+                    print("This is most likely David")
+                else:
+                    print("This is most likely Niels")
+                
             else:
                 print("This is not someone i know!")
         

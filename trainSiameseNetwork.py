@@ -1,7 +1,6 @@
 # import SRC.AI.simpleNeuralNetwerk.simpleAi as simpleNeuralNetwork
 from typing import List
 from matplotlib import pyplot as plt
-from SRC.image.imageCapture import Camera
 from SRC.AI.siameseAI import SiameseNeuralNetwork
 import pandas as pd
 from typing import Union
@@ -32,23 +31,22 @@ def modelAcc(label: str):
   axes[1].legend()
   plt.show()
 
-label:str = "David"
+label:str = "Niels"
 
 Network = SiameseNeuralNetwork(
   person = label,
-  loadOurData  = False,
-  loadAmount = 1500,
-  varients = 3,
+  loadOurData  = True,
+  loadAmount = 2000,
+  varients = 5,
   learning_rate = 1e-3,
   trainDataSize = .9,
-  batchSize = 32,
+  batchSize = 64,
   reprocessDataset = False,
   useDataset = True,
   resetNetwork = False,
-  networkSummary = True
+  networkSummary = False
 )
 
-saveData(*Network.train(100),label=label)
+saveData(*Network.train(50),label=label)
 modelAcc(label)
 Network.makeAPredictionOnABatch()
-Network.runSiameseModel(Camera=Camera(0), detectionThreshold=0.5, verificationThreshold=0.5) 

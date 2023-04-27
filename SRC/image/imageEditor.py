@@ -114,7 +114,7 @@ def modifyOriginals(maximum:int = 300,varients:int = 10,dataset:bool = False):
   currentLabel = ""
   toBeSaved = []
   for i,image in enumerate(images):
-    printProgressBar(i, len(images), start_time)
+    printProgressBar(i+1, len(images)+1, start_time)
     ID = 0
     if(image[1] == "Christoffer"):
       ID = IDChris

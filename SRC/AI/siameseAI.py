@@ -43,7 +43,7 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
           img = cv.imread(path)
           newPath = os.path.join(negPath, name + "_" + picture)
           cv.imwrite(newPath, img)
-          progbar.print(i)
+          progbar.print(i+1)
   
   
   # Get all anchor data and positive data
@@ -60,7 +60,7 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
       else:
         newPath = os.path.join(posPath, picture)
       cv.imwrite(newPath, img)
-    progbar.print(i)
+    progbar.print(i+1)
 
 # loades the image
 def preprocess(filePath):
@@ -123,15 +123,15 @@ def makeImbedding():
   
   # First block
   conv1 = Conv2D(64, (10, 10), activation='relu')(input_image)
-  maxpool1 = MaxPooling2D(64, (2, 2), padding='same')(conv1)
+  maxpool1 = MaxPooling2D(pool_size = (2, 2), padding = 'same')(conv1)
   
   # Second block
   conv2 = Conv2D(128, (7, 7), activation='relu')(maxpool1)
-  maxpool2 = MaxPooling2D(64, (2, 2), padding='same')(conv2)
+  maxpool2 = MaxPooling2D(pool_size = (2, 2), padding = 'same')(conv2)
   
   # Third block
   conv3 = Conv2D(128, (4, 4), activation='relu')(maxpool2)
-  maxpool3 = MaxPooling2D(64, (2, 2), padding='same')(conv3)
+  maxpool3 = MaxPooling2D(pool_size = (2, 2), padding = 'same')(conv3)
   
   # Final embedding block
   conv4 = Conv2D(256, (4, 4), activation='relu')(maxpool3)
@@ -142,8 +142,8 @@ def makeImbedding():
 
 class L1Dist(Layer):
   
-  def __init__(self):
-    super().__init__()
+  def __init__(self, name=None, **kwargs):
+    super().__init__(name=name, **kwargs)
   
   # compare embeddings - similarity calculation
   def call(self, inputEmbedding, validationEmbedding):
@@ -159,7 +159,7 @@ def makeSiameseModel():
   
   # Combine siamese distance components
   siameseLayer = L1Dist()
-  siameseLayer._name = 'distance'
+  siameseLayer._name = 'L1Dist'
   distances = siameseLayer(embedding(inputImage), embedding(validationImage))
   
   # Classification layer
@@ -222,36 +222,41 @@ def showSiameseBatch(testInput, testVal, yTrue, yHat, person):
   plt.show()
 
 class SiameseNeuralNetwork:
-  def __init__(self, person: str = "Christoffer", loadAmount: int = 1000, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, batchSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False):
+  def __init__(self, person: str = "Christoffer", loadOurData:bool = True, loadAmount: int = 1000, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, batchSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False, networkSummary:bool = True):
     self.person: str = person
     
     if(not useDataset):
       clearPath("images\modified\Other")
-    modifyOriginals(6000,varients) # Used to be loadAmount, but chaged it as we want to make as many as posible
     
-    rewriteDataToMatchNetwork(person=self.person, reprocessDataset = reprocessDataset)
+    self.loadOurData = loadOurData
+    if loadOurData:
+      modifyOriginals(6000,varients)
+      rewriteDataToMatchNetwork(person=self.person, reprocessDataset = reprocessDataset)
+      # Get data from files
+      (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=batchSize)
+      self.trainingData = self.trainingData.prefetch(tf.data.experimental.AUTOTUNE)
+      self.testData = self.testData.prefetch(tf.data.experimental.AUTOTUNE)
+      
+      # Optimizer and loss
+      self.lossObject = tf.losses.BinaryCrossentropy(from_logits=False)
+      self.optimizer = tf.keras.optimizers.SGD(learning_rate, momentum=0.9)
     
-    # Optimizer and loss
-    self.lossObject = tf.losses.BinaryCrossentropy(from_logits=True)
-    self.optimizer = tf.keras.optimizers.Adam(learning_rate)
-    
-    # Get data from files
-    (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=batchSize)
-    self.trainingData = self.trainingData.prefetch(tf.data.experimental.AUTOTUNE)
-    self.testData = self.testData.prefetch(tf.data.experimental.AUTOTUNE)
-    # # Get a batch of test data
-    # testInput, testVal, yTrue = testData.as_numpy_iterator().next()
     if resetNetwork:
       self.siameseNetwork = makeSiameseModel()
     else:
       # Reload model 
-      self.siameseNetwork = tf.keras.models.load_model("siamesemodel" + self.person,
-                                                  custom_objects={'L1Dist': L1Dist, 'BinaryCrossentropy': tf.losses.BinaryCrossentropy})
+      self.siameseNetwork = tf.keras.models.load_model("siamesemodelBest" + self.person)
     
-    # Gives a summary of the network
-    self.siameseNetwork.summary()
+    if networkSummary:
+      # Gives a summary of the network
+      self.siameseNetwork.summary()
   
   def train(self, EPOCHS: int = 10) -> List[List[float]]:
+    if (not self.loadOurData):
+      print("Network must load data to train")
+      return [None]
+    
+    
     # Keep results for plotting
     trainLossResults = []
     trainAccuracyResults = []
@@ -289,7 +294,7 @@ class SiameseNeuralNetwork:
       testepochAccuracy = tf.keras.metrics.BinaryAccuracy()
       
       print('\n Epoch {}/{}'.format(epoch+1,EPOCHS))
-      progbar = progbar(len(self.trainingData))
+      progbar = progBar(len(self.trainingData)+1)
       
       # Loop through each batch
       for idx, batch in enumerate(self.trainingData):
@@ -306,7 +311,9 @@ class SiameseNeuralNetwork:
         y = batch[2]
         epochAccuracy.update_state(y, self.siameseNetwork(X, training=True))
         # Update progbar
-        progbar.print(idx+1)
+        currentLoss = epochLossAvg.result().numpy()
+        currentAccuracy = epochAccuracy.result().numpy()
+        progbar.print(idx+1, suffix=f"Loss: {currentLoss:.3f}, Accuracy: {currentAccuracy:.3%}")
       
       for batch in self.testData:
         X = batch[:2]
@@ -322,7 +329,7 @@ class SiameseNeuralNetwork:
       testAccuracyResults.append(testepochAccuracy.result())
       
       if epoch % 1 == 0:
-        print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}, Test accuracy: {:.3%}".format(epoch,
+        print("\nEpoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}, Test accuracy: {:.3%}".format(epoch,
                                                                       epochLossAvg.result(),
                                                                       epochAccuracy.result(),
                                                                       testepochAccuracy.result()))
@@ -340,13 +347,13 @@ class SiameseNeuralNetwork:
     axes[1].plot(testAccuracyResults, 'ro--', label = 'Test_accuracy')
     axes[1].legend()
     plt.show()
-    
-    # Replace the old model with the new trained one
-    self.siameseNetwork.save('siamesemodel' + self.person, save_format='tf')
+    self.siameseNetwork.save("siamesemodelBest" + self.person, save_format='tf')
     return [trainLossResults,testAccuracyResults,trainAccuracyResults]
   
   # Makes some predictions on some data and outputs how sure it was
   def makeAPredictionOnABatch(self):
+    if (not self.loadOurData):
+      return print("Network must load data to be able to predict")
     testInput, testVal, yTrue = self.testData.as_numpy_iterator().next()
     yHat = self.siameseNetwork.predict([testInput, testVal])
     # Post processing the results 
@@ -366,10 +373,11 @@ class SiameseNeuralNetwork:
     
     return predictions
   
-  def runSiameseModel(self,Camera, detectionThreshold: float = 0.5, verificationThreshold: float = 0.5):
+  def runSiameseModel(self, Camera, image, detectionThreshold: float = 0.5, verificationThreshold: float = 0.5):
     """Runs the siamese model you are currently working on
     Args:
         Camera: Takes an instance of the class Cam from imageCapture, e.g Cam(0)
+        Image: Takes in a picture of a person to verify
     Returns:
       True if you are verified and false if not
     """
@@ -381,7 +389,7 @@ class SiameseNeuralNetwork:
     pathToImagesFromPerson = os.path.join('images\original', self.person)
     print('\n Adding 10 random images to: '+ verificationPath +' : from: '+ pathToImagesFromPerson)
     
-    highestID = len(os.listdir(pathToImagesFromPerson))
+    highestID = len(os.listdir(pathToImagesFromPerson))-2
     
     for i in range(10):
       path = os.path.join(pathToImagesFromPerson, str(random.randint(0,highestID))+'.jpg')
@@ -389,30 +397,36 @@ class SiameseNeuralNetwork:
       newPath = os.path.join(verificationPath, str(len(os.listdir(verificationPath)))+'.jpg')
       cv.imwrite(newPath, img)
     
-    
-    # Initialize a Cam class
-    Camera = Camera
-    
-    while True:
-      frame = Camera.readCam()
+    if (not Camera == None):
+      # Initialize a Cam class
+      Camera = Camera
       
-      # Verification trigger
-      if cv.waitKey(10) & 0xFF == ord('v'):
-        face = Camera.processFace(frame)
-        if type(face) != type(None):
-          face = makeVarients(face,1)[0]
-          if type(face) == np.ndarray:
-            cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
-            # Run verification
-            results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
-            if verified:
-              print("This is " + self.person)
-              print("The results are: ", results)
-              
-            else:
-              print("This is not " + self.person)
-              print("The results are: ", results)
+      while True:
+        frame = Camera.readCam()
+        
+        # Verification trigger
+        if cv.waitKey(10) & 0xFF == ord('v'):
+          face = Camera.processFace(frame)
+          if type(face) != type(None):
+            face = makeVarients(face,1)[0]
+            if type(face) == np.ndarray:
+              cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), face)
+              # Run verification
+              results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
+              if verified:
+                print("This is " + self.person)
+                print("The results are: ", results)
+              else:
+                print("This is not " + self.person)
+                print("The results are: ", results)
+        
+        if cv.waitKey(10) & 0xFF == ord('q'):
+          break
+      cv.destroyAllWindows()
+    
+    if type(image) == np.ndarray: 
+      cv.imwrite(os.path.join('images\DataSiameseNetwork', 'inputImages', 'inputImage.jpg'), image)
+      # Run verification
+      results, verified = verify(self.siameseNetwork, detectionThreshold, verificationThreshold, person=self.person)
       
-      if cv.waitKey(10) & 0xFF == ord('q'):
-        break
-    cv.destroyAllWindows()
+      return (results, verified)

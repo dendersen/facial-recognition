@@ -4,19 +4,21 @@ from itertools import count
 from SRC.AI.knn.point import Point
 from SRC.AI.knn.distanceStorage import Distance as dist
 from SRC.AI.knn.distanceStorage import checkDist, getFirst
-import time as Time
 from typing import List
 
-distances:List[dist] = []
+from SRC.progBar import progBar
 
+distances:List[dist] = []
+calcBar:progBar
 def clearDist():
-  global distances
+  global distances 
   distances.clear()
 
 def addDist(test:Point,points:List[Point],CalcID:int):
-  global distances
+  global distances, calcBar
   for i in points:
       if i != test:
+        calcBar.incriment(suffix="      ")
         distances.append(dist(i,test.distance(CalcID,i)))#calculate the distance
 
 class Knn:
@@ -40,10 +42,11 @@ class Knn:
     return item0.distance(self.distanceCalcID,item1)#calls the distance method contained in the class point
   
   def runData(self) -> None:#runs the algorithm through all unkown points
-    time = 0
+    progbar = progBar(len(self.data),prefix="\033[Aall calculations:")
+    print("\n")
     for i,toBeTested in enumerate(self.data): #datapoint being checked
-      time = Time.mktime(Time.localtime())
-      print(str(i) + "/" + str(len(self.data)) + "\r",end="")
+      progbar.print(i,suffix="      \n")
+      
       distances:List[dist] = self.calculateDistances(toBeTested)
       
       #sorts after best
@@ -58,7 +61,8 @@ class Knn:
       #saves best label
       toBeTested.label = labelCounts[0][1]
       self.referencePoints.append(toBeTested)
-      print("timeSpent:", Time.mktime(Time.localtime())-time)
+    progbar.incriment(suffix="      \n")
+    print("")
     return
   
   def findIndividualLabels(self, labels:List[str]) -> List[str]:
@@ -74,6 +78,8 @@ class Knn:
     return foundLabels
   
   def calculateDistances(self, test:Point) -> List[dist]:
+    global calcBar
+    calcBar = progBar(len(self.referencePoints),prefix="distances calculations:")
     length = len(self.referencePoints)/self.threads
     t:List[threading.Thread] = []
     clearDist()
@@ -86,9 +92,6 @@ class Knn:
     for i in t:
       i.join()
     
-    
-    while(len(self.referencePoints) != len(distances)):
-      Time.sleep(0.1)
     return distances
   
   def errorRate(self,msg:str = "")->int:#counts the number of True in error array
@@ -97,10 +100,10 @@ class Knn:
       if i.label != j:
         e+=1
     if(len(self.solution) == 1):
-      print("guess =",self.referencePoints[::-1][0].label, ", correct =",self.solution[::-1][0])
+      print("\nguess =",self.referencePoints[::-1][0].label, ", correct =",self.solution[::-1][0])
       print(msg)
     else:
-      print ((len(self.solution) - e) / len(self.solution),"percent correct")
+      print ("current K: ",self.k, "|" ,((len(self.solution) - e) / len(self.solution))*100,"percent correct\n")
     return e
   
   def testK(self,rangeOfK: range = -1) -> List[Point]:#test's for different k's on the current ori(original know points) and currently active dataset 
@@ -111,7 +114,7 @@ class Knn:
       (self.buildInternalKNN(i,self.distanceCalcID))
     return
   
-  def buildInternalKNN(self, k, dist, simple = 0):
+  def buildInternalKNN(self, k, dist):
       k_nn = Knn([*self.ori.copy()],k,dist,self.threads)#creates a new knn algorithm with a new k and dist
       k_nn.UpdateDataset(self.data.copy(),self.solution.copy())#provides the algorithem with data
       k_nn.runData()#runs the algorithm

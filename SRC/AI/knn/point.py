@@ -1,11 +1,12 @@
 from math import sqrt
 from struct import pack,unpack
 from typing import List
+import numpy as np
 class Point:pass
 
 class Point:
   def __init__(self,location:List[float],label:str = "lime") -> None:
-    self.location = location
+    self.location = np.array(location)
     self.label = label
     self.dist = [self.euclid,self.manhattan,self.chebyshev,self.hammingManhattan,self.hammingEuclid,self.hammingChebyshev]
   
@@ -16,11 +17,11 @@ class Point:
   def distance(self,version:int,point:Point):
     return self.dist[version](point)
   def euclid(self,point:Point)->float:
-    return sqrt(sum([(i-l)**2 for i,l in zip(self.location,point.location)]))
+    return sqrt(sum((self.location-point.location)**2))
   def manhattan(self,point:Point)->float:
-    return abs((sum([(i-l) for i,l in zip(self.location,point.location)])))
+    return abs(sum(self.location-point.location))
   def chebyshev(self,point:Point)->float:
-    return max([abs(i-l) for i,l in zip(self.location,point.location)])
+    return max(np.abs(self.location-point.location))
   def hamming(self,point:Point) -> List[int]:
     differ = []
     for i,l in (self.location,point.location):
@@ -29,7 +30,7 @@ class Point:
   def hammingManhattan(self,point:Point)->float:
     return sum(self.hamming(point))
   def hammingEuclid(self,point:Point):
-    return sqrt(sum(i**2 for i in self.hamming(point)))
+    return sqrt(sum(self.hamming(point)**2))
   def hammingChebyshev(self,point:Point):
     return max(self.hamming(point))
 

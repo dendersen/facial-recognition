@@ -4,17 +4,21 @@ import cv2 as cv
 import numpy as np
 from SRC.AI.knn.knn import Knn
 from SRC.AI.knn.point import Point
-# from SRC.image.imageEditor import makeVarients
 import SRC.image.imageLoader as IL
-# import SRC.image.imageSaver as IS
-
+from SRC.image.imageEditor import modifyOriginals
+from SRC.image.imageCapture import Camera
+from SRC.progBar import progBar
+from PIL import Image
 def makePoint(thing: Tuple[List[List[List[int]]],str]) -> Point:
   return Point([color for x in thing[0] for y in x for color in y],thing[1])
 
 def makePoints(things: List[Tuple[List[List[List[int]]],str]]):
   points:list[Point] = []
-  for thing in things:
+  print("preparing points")
+  progbar = progBar(len(things))
+  for i,thing in enumerate(things):
     points.append(makePoint(thing))
+    progbar.print(i)
   print("there are:",len(points),"produced points")
   return points
 
@@ -33,17 +37,19 @@ def getValidLabel(msg:str)->str:
     print("not a valid label")
 
 def getPic():
-  Camera = Camera(0)
+  Cam = Camera(0)
   print("smile!")
   while True:
-    pic = Camera.readCam()
+    pic = Cam.readCam()
     if cv.waitKey(10) == 32:
-      BGRface = Camera.processFace(pic)
+      BGRface = Cam.processFace(pic)
       if type(BGRface) == np.ndarray:
           # save original face
           RGBface = cv.cvtColor(BGRface, cv.COLOR_BGR2RGB)
-          print("This is the shape of the face picture: ", RGBface.shape)
-          return RGBface
+          RGBface = Image.fromarray(RGBface)
+          RGBface = RGBface.crop((10,10,110,110))
+          RGBface = RGBface.resize((100,100))
+          return np.array(RGBface)
 
 def getYN(msg:str) -> bool:
   return input(msg + " Y/N: ").capitalize() == "Y"
@@ -54,15 +60,14 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
     ori = getYN("should original images be used")
   
   mod = useModified
-  if(useModified == None and ori):
+
+  if(type(useModified) == type(None)):
     mod = getYN("should modified images  be used")
   elif(not ori):
     mod = True
-  else:
-    mod = getYN("should modified images  be used")
   
   if(makeModified):
-    IL.modifyOriginals()
+    modifyOriginals()
   
   if(perLabel == None):
     perLabel:int = takeInput("the number of images to be loaded: ")
@@ -76,7 +81,7 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
           all = IL.loadImgAsArr(perLabel,False,alowModified=True)
   
   all = makePoints(all)
-  print("final number of images per label:",perLabel)
+  print("final number of images per label:",len(all)/4)
   
   k:Knn = None
   
@@ -84,8 +89,8 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
     k = Knn(all.copy(),distID=distID,threads=threadCount)
     k.UpdateDataset([makePoint((getPic(),"UnKnown"))],[getValidLabel("who is this a picture of? ")])
   else:
-    known = all[0:floor(len(all)*distribution)].copy()
-    unkown = all[::-1][0:floor(len(all)*(1-distribution))].copy()
+    known = all[0:floor(len(all)*(1-distribution))].copy()
+    unkown = all[::-1][0:floor(len(all)*distribution)].copy()
     
     k = Knn(known,distID=distID,threads=threadCount)
     k.UpdateDataset(unkown,[i.label for i in unkown])

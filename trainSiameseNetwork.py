@@ -1,11 +1,14 @@
 # import SRC.AI.simpleNeuralNetwerk.simpleAi as simpleNeuralNetwork
 from typing import List
 from matplotlib import pyplot as plt
-from SRC.image.imageCapture import Camera
 from SRC.AI.siameseAI import SiameseNeuralNetwork
 import pandas as pd
+from typing import Union
 
-def saveData(losses: List[float], test_accuracy: List[float], train_accuracy: List[float], label):
+def saveData(losses: Union[List[float],None], test_accuracy: Union[List[float],None] = None, train_accuracy: Union[List[float],None] = None, label = "Christoffer"):
+  if losses == None:
+    return
+  
   file = open(f"Data\\{label}.csv", "a")
   for loss, test, train in zip(losses, test_accuracy, train_accuracy):
     file.write(f"{loss},{test},{train}\n")
@@ -28,21 +31,22 @@ def modelAcc(label: str):
   axes[1].legend()
   plt.show()
 
-label:str = "Christoffer"
+label:str = "Niels"
 
 Network = SiameseNeuralNetwork(
   person = label,
-  loadAmount = 50,
-  varients = 3,
-  learning_rate = 1e-5,
+  loadOurData  = True,
+  loadAmount = 2000,
+  varients = 5,
+  learning_rate = 1e-3,
   trainDataSize = .9,
-  batchSize = 16,
+  batchSize = 64,
   reprocessDataset = False,
   useDataset = True,
-  resetNetwork = False
+  resetNetwork = False,
+  networkSummary = False
 )
 
-# saveData(*Network.train(20),label)
-# modelAcc(label)
+saveData(*Network.train(50),label=label)
+modelAcc(label)
 Network.makeAPredictionOnABatch()
-Network.runSiameseModel(Camera=Camera(0), detectionThreshold=0.7, verificationThreshold=0.3) 

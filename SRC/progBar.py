@@ -2,7 +2,6 @@ from typing import Union
 import sys
 from time import time
 
-
 class progBar():
   def __init__(self, total:Union[float,int],startTime:int = None, prefix:str='Progress:',length:int=50,fill:str='█',empty:str = '-') -> None:
     self.total = total
@@ -16,7 +15,6 @@ class progBar():
     self.fill = fill
     self.empty = empty
     self.iteration = 0
-    pass
   
   def print(self,iteration, suffix=""):
     elapsed_time = time() - self.startTime
@@ -31,7 +29,6 @@ class progBar():
     bar = self.fill * filled_length + '-' * (self.length - filled_length)
     time_str = f"Remaining: {remaining_time:.1f}s"
     count_str = f"{self.iteration}/{self.total}"
-    
     sys.stdout.write(f'\r{self.prefix} |{bar}| {percent}% {count_str} {time_str} {suffix}')
     sys.stdout.flush()
   

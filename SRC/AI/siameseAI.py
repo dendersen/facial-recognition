@@ -104,7 +104,7 @@ def buildData(loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int =
   # Build dataloader pipline
   data = data.map(preprocessTwin)
   data = data.cache()
-  data = data.shuffle(buffer_size=1024)
+  data = data.shuffle(buffer_size=5000)
   
   # Training partition
   trainData = data.take(round(len(data)*trainDataSize))

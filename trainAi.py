@@ -41,8 +41,8 @@ def chooseEpochs():
         chooseEpochs() 
 
 print("Welcome to our models. Please select a model to train: \n",
-      "Press 1: Simple Neural Network \n", 
-      "Press 2: Siamese Neural Network")
+    "Press 1: Simple Neural Network \n", 
+    "Press 2: Siamese Neural Network")
 
 modelNumber = chooseModel()
 

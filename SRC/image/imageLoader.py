@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 import os
 import tensorflow as tf
+import numpy as np
 
 from SRC.image.imageCapture import Camera
 from SRC.image.imageSaver import saveImage
@@ -131,7 +132,7 @@ def preprocess(filePath,label):
   img = img/255.0
   return (img,label)
 
-def loadDataset(loadAmount: int, trainDataSize: float = 0.7, bachSize: int = 16):
+def loadDataset(loadAmount: int, trainDataSize: float = 0.7, batchSize: int = 64):
   """
   Lodes a set amount of the dataset. 
   splits the dataset into traning data and test data
@@ -163,10 +164,10 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7, bachSize: int = 16)
   otherImagePath = otherImagePath.take(loadAmount)
   
   # Adds label to imagepaths
-  chrisData = tf.data.Dataset.zip((chrisImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(chrisImagePath),0)))) 
-  davidData = tf.data.Dataset.zip((davidImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(davidImagePath),1)))) 
-  nielsData = tf.data.Dataset.zip((nielsImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(nielsImagePath),2))))
-  otherData = tf.data.Dataset.zip((otherImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(otherImagePath),3))))
+  chrisData = tf.data.Dataset.zip((chrisImagePath, tf.data.Dataset.from_tensor_slices(tf.convert_to_tensor([[1,0,0,0]]*len(chrisImagePath))))) 
+  davidData = tf.data.Dataset.zip((davidImagePath, tf.data.Dataset.from_tensor_slices(tf.convert_to_tensor([[0,1,0,0]]*len(davidImagePath))))) 
+  nielsData = tf.data.Dataset.zip((nielsImagePath, tf.data.Dataset.from_tensor_slices(tf.convert_to_tensor([[0,0,1,0]]*len(nielsImagePath)))))
+  otherData = tf.data.Dataset.zip((otherImagePath, tf.data.Dataset.from_tensor_slices(tf.convert_to_tensor([[0,0,0,1]]*len(otherImagePath)))))
   
   # concatenates the data together
   chrisAndDavid = chrisData.concatenate(davidData)
@@ -180,15 +181,14 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7, bachSize: int = 16)
   
   # Training partition
   trainData = data.take(round(len(data)*trainDataSize))
-  trainData = trainData.batch(bachSize)
+  trainData = trainData.batch(batchSize)
   trainData = trainData.prefetch(8)
   
   # Testing partition
   testData = data.skip(round(len(data)*trainDataSize))
   # testData = testData.take(round(len(data)*(1-trainDataSize)))
-  testData = testData.batch(bachSize)
+  testData = testData.batch(batchSize)
   testData = testData.prefetch(8)
   return (trainData, testData)
-
 
 

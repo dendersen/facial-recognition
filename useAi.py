@@ -15,7 +15,7 @@ from SRC.image.imageEditor import makeVarients
 # 2: David
 # 3: Niels
 # 4: Other
-predictions = [int]
+predictionsOfModels = [int]
 
 def chooseModel() -> int:
     answer = input()
@@ -57,7 +57,7 @@ def identifyImage(image, model):
     print(score)
 
     # Saves the prediction
-    predictions.append(np.argmax(score) + 1)
+    predictionsOfModels.append(np.argmax(score) + 1)
     
     plt.imshow(image)
     plt.title(winner)
@@ -81,7 +81,7 @@ def useCNN():
             pic = takePic(camera)
             if(pic is None):
                 continue 
-            
+            pic = pic/255.0
             identifyImage(pic,CNN)
             
         if cv.waitKey(10) == 27: #Stop on esc 
@@ -154,16 +154,16 @@ def useSiameseNeuralNetwork():
                 if sikkerhed1 > sikkerhed2 and sikkerhed1 > sikkerhed3:
                     print("This is most likely Christoffer")
                     # Save the prediction
-                    predictions.append(1)
+                    predictionsOfModels.append(1)
                 elif sikkerhed2 > sikkerhed1 and sikkerhed2 > sikkerhed3:
                     print("This is most likely David")
-                    predictions.append(2)
+                    predictionsOfModels.append(2)
                 else:
                     print("This is most likely Niels")
-                    predictions.append(3)
+                    predictionsOfModels.append(3)
             else:
                 print("This is not someone i know!")
-                predictions.append(4)
+                predictionsOfModels.append(4)
         
         if cv.waitKey(10) == 27: #Stop on esc 
             print("stop")

@@ -1,6 +1,6 @@
 from typing import List
 from matplotlib import pyplot as plt
-from SRC.AI.siameseAI import SiameseNeuralNetwork
+from SRC.AI.siameseNetwork.siameseAI import SiameseNeuralNetwork
 import pandas as pd
 from typing import Union
 import itertools
@@ -92,7 +92,3 @@ def findBesthyperparameters():
         best_hyperparameters = (lr, lambdaReg)
     progbar.print(i+1,suffix="\n\n")
   print(f"Best hyperparameters: learning_rate: {best_hyperparameters[0]}, lambdaReg: {best_hyperparameters[1]}")
-
-# label = "Niels"
-# trainAndEvaluate(learningRate=0.0001,lamdaReg=1e-6, label=label, EPOCHS=15, loadNewData=True, resetNetwork=True)
-# modelAcc(label)

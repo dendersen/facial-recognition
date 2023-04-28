@@ -42,6 +42,7 @@ class Knn:
     return item0.distance(self.distanceCalcID,item1)#calls the distance method contained in the class point
   
   def runData(self) -> None:#runs the algorithm through all unkown points
+    print("\033[7A")
     progbar = progBar(len(self.data),prefix="\033[Aall calculations:")
     print("\n")
     for i,toBeTested in enumerate(self.data): #datapoint being checked
@@ -63,6 +64,8 @@ class Knn:
       self.referencePoints.append(toBeTested)
     progbar.incriment(suffix="      \n")
     print("")
+    if(len(self.solution) == 1):
+      return self.referencePoints[-1].label
     return
   
   def findIndividualLabels(self, labels:List[str]) -> List[str]:
@@ -109,10 +112,12 @@ class Knn:
   def testK(self,rangeOfK: range = -1) -> List[Point]:#test's for different k's on the current ori(original know points) and currently active dataset 
     if rangeOfK == -1 :#sets a default range of k
       rangeOfK = range(1,8,2)
-    
+    e = 2e10
     for i in rangeOfK:
-      (self.buildInternalKNN(i,self.distanceCalcID))
-    return
+      temp = self.buildInternalKNN(i,self.distanceCalcID)
+      e = temp if temp[0] < e[0] else e
+    print("\n\n")
+    return e[1]
   
   def buildInternalKNN(self, k, dist):
       k_nn = Knn([*self.ori.copy()],k,dist,self.threads)#creates a new knn algorithm with a new k and dist

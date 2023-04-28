@@ -24,7 +24,7 @@ class Point:
     return max(np.abs(self.location-point.location))
   def hamming(self,point:Point) -> List[int]:
     differ = []
-    for i,l in (self.location,point.location):
+    for i,l in zip(self.location,point.location):
       differ.append(dif(floatToBin(i),floatToBin(l)))
     return differ
   def hammingManhattan(self,point:Point)->float:

@@ -53,9 +53,12 @@ def chooseLabel():
 def chooseIfNetworkShouldReset():
     print("Please select if the network should be reset: True or False")
     answer = input()
-    if (answer == "True" or answer == "False"):
+    if (answer == "True"):
         print("You chose " + answer)
-        return bool(answer)
+        return True
+    if (answer == "False"):
+        print("You chose " + answer)
+        return False
     else:
         print("Please select a valid option: True or False")
         chooseIfNetworkShouldReset()
@@ -63,9 +66,12 @@ def chooseIfNetworkShouldReset():
 def chooseIfNetworkShouldLoadNewData():
     print("Please select if the network should load new data: True or False")
     answer = input()
-    if (answer == "True" or answer == "False"):
+    if (answer == "True"):
         print("You chose " + answer)
-        return bool(answer)
+        return True
+    if (answer == "False"):
+        print("You chose " + answer)
+        return False
     else:
         print("Please select a valid option: True or False")
         chooseIfNetworkShouldLoadNewData()
@@ -83,9 +89,12 @@ def chooseVariants():
 def chooseIfReprocessDataset():
     print("Please select if the network reload the data from Labels In The Wild: True or False")
     answer = input()
-    if (answer == "True" or answer == "False"):
+    if (answer == "True"):
         print("You chose " + answer)
-        return bool(answer)
+        return True
+    if (answer == "False"):
+        print("You chose " + answer)
+        return False
     else:
         print("Please select a valid option: True or False")
         chooseIfReprocessDataset()
@@ -93,9 +102,12 @@ def chooseIfReprocessDataset():
 def chooseIfYouShouldUseDataset():
     print("Please select if the network should use the dataset: True or False")
     answer = input()
-    if (answer == "True" or answer == "False"):
+    if (answer == "True"):
         print("You chose " + answer)
-        return bool(answer)
+        return True
+    if (answer == "False"):
+        print("You chose " + answer)
+        return False
     else:
         print("Please select a valid option: True or False")
         chooseIfYouShouldUseDataset()

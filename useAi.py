@@ -32,7 +32,7 @@ def takePic(camera: IC.Camera):
     else:
         print("ERROR: Face was not np.ndarray")
 
-# works for simple Neural network
+# works for CNN
 def identifyImage(image, model):
     # Add a batch dimension
     pic = tf.expand_dims(image, axis=0)
@@ -58,8 +58,8 @@ def useKNN():
     runKNN.runKNN()
     pass
 
-def useSimpleNeuralNetwork():
-    simpleNeuralNetwork = tf.keras.models.load_model('SimpleAi')
+def useCNN():
+    CNN = tf.keras.models.load_model('CNNAi')
     print("model loaded")
     
     camera = IC.Camera(0)
@@ -71,7 +71,7 @@ def useSimpleNeuralNetwork():
             if(pic is None):
                 continue 
             
-            identifyImage(pic,simpleNeuralNetwork)
+            identifyImage(pic,CNN)
             
         if cv.waitKey(10) == 27: #Stop on esc 
             print("stop")
@@ -155,7 +155,7 @@ def useSiameseNeuralNetwork():
 
 print("Welcome to our models. Please select a model: \n",
     "Press 1: KNN \n", 
-    "Press 2: Simple Neural Network \n", 
+    "Press 2: Convolutional Neural Network \n", 
     "Press 3: Siamese Neural Network")
 
 modelNumber = chooseModel()
@@ -164,7 +164,7 @@ if modelNumber == 1:
     useKNN()
 
 if modelNumber == 2:
-    useSimpleNeuralNetwork()
+    useCNN()
 
 if modelNumber == 3:
     useSiameseNeuralNetwork()

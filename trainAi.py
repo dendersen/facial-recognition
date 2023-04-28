@@ -113,7 +113,7 @@ def chooseIfYouShouldUseDataset():
         chooseIfYouShouldUseDataset()
 
 print("Welcome to our models. Please select a model to train: \n",
-    "Press 1: Simple Neural Network \n", 
+    "Press 1: Convolutional Neural Network \n", 
     "Press 2: Siamese Neural Network")
 
 modelNumber = chooseModel()
@@ -128,9 +128,16 @@ print("How many epochs should the model be trained on:")
 epochAmount = chooseEpochs()
 
 if(modelNumber == 1):
+    variantAmount = chooseVariants()
     print("Importing")
-    import SRC.AI.simpleNeuralNetwerk.simpleAi as simpleNetwork
-    simpleNetwork.makeModel(loadAmount,trainingSize,epochAmount)
+    import SRC.AI.CNN.CNNAi as CNN
+    import SRC.image.imageEditor as IE
+
+    print("making variants")
+    IE.modifyOriginals(loadAmount,variantAmount)
+
+    print("Making Ai")
+    CNN.makeModel(loadAmount*variantAmount,trainingSize,epochAmount)
 
 if(modelNumber == 2):
     print("Importing")

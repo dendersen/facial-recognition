@@ -96,4 +96,4 @@ def makeModel(loadAmount: int, trainDataSize:float = .7, epochs: int = 15):
     
     showResults(acc,val_acc,loss,val_loss,epochs_range)
     
-    model.save("SimpleAi", save_format='tf')
+    model.save("CNNAi", save_format='tf')

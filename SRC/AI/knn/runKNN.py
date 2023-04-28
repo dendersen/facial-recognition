@@ -57,7 +57,7 @@ def getYN(msg:str) -> bool:
   return input(msg + " Y/N: ").capitalize() == "Y"
 
 def pickDist() -> int:
-  dist:List[str] = ["euclid","manhattan","chebyshev","hammingManhattan","hammingEuclid","hammingChebyshev"]
+  dist:List[str] = ["euclid","manhattan","chebyshev","hamming manhattan","hamming euclid","hamming chebyshev"]
   while(True):
     for i,name in enumerate(dist):
       print(f"{i}: {name}")
@@ -66,11 +66,12 @@ def pickDist() -> int:
       tempAnswer = int(answer)
       if(tempAnswer >= 0 and tempAnswer < len(dist)):
         return tempAnswer
-    except:
+    except Exception:
       try:
-        return dist.index(answer.lower())
-      except:
-        break
+        temp = dist.index(answer.lower())
+        return temp
+      except Exception:
+        pass
 
 def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, takePic:bool = True, distribution:float = 0.3,distID:int = None,threadCount:int = 1):
   ori = useOriginals

@@ -44,22 +44,18 @@ def changeHSV(img: List[List[List[int]]], hue: int = 0, saturation: int = 0, bri
 
 def makeVarients(image: List[List[List[int]]], variantNumber:int = 10, move:bool = True, sharp:bool = True, hueShift:bool = True, noisy:bool = True, faces = None) -> List[List[List[List[int]]]]: 
   # Height and width is always the same. It's defined as size
-  size  = image.shape[0]
+  size = image.shape[0]
   
-  buffer1Size = int(size * 0.8)
+  buffer1Size = int(size * (5/6))
   maxOffset = int(size-buffer1Size)
   if(faces == None):
     faces: list[np.ndarray[np.ndarray[np.ndarray[int]]]] = []
   
   for i in range(variantNumber):
     if(move):
-      xStart =  random.randint(0,maxOffset)
-      xEnd = xStart + buffer1Size
-      yStart = random.randint(0,maxOffset)
-      yEnd = yStart + buffer1Size
-      newVariant = image[yStart:yEnd, xStart:xEnd]
+      newVariant = translate(image, buffer1Size, maxOffset)
     else:
-      newVariant = image[10:10, 110:110]
+      newVariant = image[10:110, 10:110]
     if (sharp):
       newVariant = sharpen(newVariant, strength = 2, size = 5 if random.random() > 0.5 else 3)
     if(hueShift):
@@ -67,7 +63,15 @@ def makeVarients(image: List[List[List[int]]], variantNumber:int = 10, move:bool
     if (noisy):
       newVariant = noise(newVariant, deviation = random.randint(0,8) if random.random() < 0.995 else random.randint(5,25))
     faces.append(newVariant)
+
   return faces
+
+def translate(image: List[List[List[int]]], buffer1Size: int, maxOffset: int):
+    xStart =  random.randint(0,maxOffset)
+    xEnd = xStart + buffer1Size
+    yStart = random.randint(0,maxOffset)
+    yEnd = yStart + buffer1Size
+    return image[yStart:yEnd, xStart:xEnd]
 
 def clearModified():
   clearPath('images\\modified\\Christoffer')

@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from typing import List
 from SRC.image.imageCapture import Camera
-from SRC.AI.siameseAI import SiameseNeuralNetwork
+from SRC.AI.siameseNetwork.siameseAI import SiameseNeuralNetwork
 import pandas as pd
 from SRC.image.imageEditor import makeVarients
 
@@ -54,7 +54,7 @@ def identifyImage(image, model):
     
     
 def useKNN():
-    import runKNN
+    import SRC.AI.knn.runKNN as runKNN
     runKNN.runKNN()
     pass
 

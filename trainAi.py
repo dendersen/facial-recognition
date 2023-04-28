@@ -141,7 +141,7 @@ if(modelNumber == 1):
 
 if(modelNumber == 2):
     print("Importing")
-    from trainSiameseNetwork import trainAndEvaluate
+    from SRC.AI.siameseNetwork.trainSiameseNetwork import trainAndEvaluate
     label = chooseLabel()
     resetNetwork = chooseIfNetworkShouldReset()
     loadNewData = chooseIfNetworkShouldLoadNewData()

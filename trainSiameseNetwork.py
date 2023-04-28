@@ -40,20 +40,20 @@ def clear_screen():
     else:
         os.system("clear")
 
-def trainAndEvaluate(learningRate, lamdaReg, label, EPOCHS=50, loadNewData = False, resetNetwork = True):
+def trainAndEvaluate(learningRate = 0.0001, lamdaReg = 1e-6, label = "Christoffer", EPOCHS=50, loadNewData = False, resetNetwork = True, loadAmount = 2000, varients = 5, trainDataSize = 0.9, batchSize = 64, reprocessDataset = False, useDataset = True, networkSummary = False):
   network = SiameseNeuralNetwork(
     person=label,
     loadNewData=loadNewData,
-    loadAmount=2000,
-    varients=5,
+    loadAmount=loadAmount,
+    varients=varients,
     learningRate=learningRate,
     lamdaReg=lamdaReg,
-    trainDataSize=0.9,
-    batchSize=64,
-    reprocessDataset=False,
-    useDataset=True,
+    trainDataSize=trainDataSize,
+    batchSize=batchSize,
+    reprocessDataset=reprocessDataset,
+    useDataset=useDataset,
     resetNetwork=resetNetwork,
-    networkSummary=False
+    networkSummary=networkSummary
   )
   
   trainLossResults,testAccuracyResults,trainAccuracyResults = network.train(EPOCHS)
@@ -84,7 +84,7 @@ def findBesthyperparameters():
     # progbar.print(i,suffix="\n")
     print(f"Training with learning rate: {lr}, lambdaReg: {lambdaReg}")
     # Træn og evaluer modellen med de aktuelle hyperparametre
-    val_accuracy = trainAndEvaluate(lr, lambdaReg, label, EPOCHS)
+    val_accuracy = trainAndEvaluate(lr, lambdaReg, label, EPOCHS, loadNewData=False)
 
     # Hvis nøjagtigheden på valideringsdata er bedre end den hidtil bedste, opdater den bedste kombination og resultater
     if val_accuracy > best_val_accuracy:
@@ -92,6 +92,7 @@ def findBesthyperparameters():
         best_hyperparameters = (lr, lambdaReg)
     progbar.print(i+1,suffix="\n\n")
   print(f"Best hyperparameters: learning_rate: {best_hyperparameters[0]}, lambdaReg: {best_hyperparameters[1]}")
-label = "Christoffer"
-trainAndEvaluate(learningRate=0.0001,lamdaReg=1e-6, label=label, EPOCHS=10, loadNewData=True, resetNetwork=False)
-modelAcc(label)
+
+# label = "Niels"
+# trainAndEvaluate(learningRate=0.0001,lamdaReg=1e-6, label=label, EPOCHS=15, loadNewData=True, resetNetwork=True)
+# modelAcc(label)

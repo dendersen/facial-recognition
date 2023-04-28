@@ -16,7 +16,7 @@ class progBar():
     self.empty = empty
     self.iteration = 0
   
-  def print(self,iteration, suffix=""):
+  def print(self,iteration, suffix="", prefix:str = None):
     elapsed_time = time() - self.startTime
 
     self.iteration = iteration
@@ -29,7 +29,10 @@ class progBar():
     bar = self.fill * filled_length + '-' * (self.length - filled_length)
     time_str = f"Remaining: {remaining_time:.1f}s"
     count_str = f"{self.iteration}/{self.total}"
-    sys.stdout.write(f'\r{self.prefix} |{bar}| {percent}% {count_str} {time_str} {suffix}')
+    if(type(prefix) == type(None)):
+      sys.stdout.write(f'\r{self.prefix} |{bar}| {percent}% {count_str} {time_str} {suffix}')
+    else:
+      sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {count_str} {time_str} {suffix}')
     sys.stdout.flush()
   
   def incriment(self,suffix:str = ""):

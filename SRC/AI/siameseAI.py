@@ -36,7 +36,7 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
   for name in ["Christoffer","Niels","David","Other"]:
     if name != person:
       print('\n Adding images to: '+ negPath +' : from: images\modified\\' + name)
-      progbar = progBar(len(os.listdir('images\modified\\' + name)))
+      progbar = progBar(len(os.listdir('images\modified\\' + name))-1)
       for i,picture in enumerate(os.listdir('images\\modified\\' + name)):
         if ".jpg" in picture:
           path = os.path.join('images\modified', name, picture)
@@ -104,7 +104,7 @@ def buildData(loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int =
   # Build dataloader pipline
   data = data.map(preprocessTwin)
   data = data.cache()
-  data = data.shuffle(buffer_size=1024)
+  data = data.shuffle(buffer_size=5000)
   
   # Training partition
   trainData = data.take(round(len(data)*trainDataSize))
@@ -221,25 +221,31 @@ def showSiameseBatch(testInput, testVal, yTrue, yHat, person):
         indexTest = indexTest + 1
   plt.show()
 
+def binaryCrossentropyWithRegularization(yTrue, yPred, weights, lambdaReg=1e-4):
+  crossEntropyLoss = tf.keras.losses.binary_crossentropy(yTrue, yPred)
+  l2Reg = tf.add_n([tf.nn.l2_loss(w) for w in weights]) * lambdaReg
+  return crossEntropyLoss + l2Reg, crossEntropyLoss
+
 class SiameseNeuralNetwork:
-  def __init__(self, person: str = "Christoffer", loadOurData:bool = True, loadAmount: int = 1000, varients:int = 4, learning_rate: float = 1e-4, trainDataSize: float = 0.7, batchSize: int = 16, reprocessDataset: bool = False, useDataset:bool = False, resetNetwork: bool = False, networkSummary:bool = True):
+  def __init__(self, person: str = "Christoffer", loadNewData:bool = True, loadAmount: int = 2000, varients:int = 5, learningRate: float = 0.0001, lamdaReg: float = 1e-6, trainDataSize: float = 0.9, batchSize: int = 64, reprocessDataset: bool = False, useDataset:bool = True, resetNetwork: bool = False, networkSummary:bool = True):
     self.person: str = person
     
     if(not useDataset):
       clearPath("images\modified\Other")
     
-    self.loadOurData = loadOurData
-    if loadOurData:
+    self.loadNewData = loadNewData
+    if loadNewData:
       modifyOriginals(6000,varients)
       rewriteDataToMatchNetwork(person=self.person, reprocessDataset = reprocessDataset)
-      # Get data from files
-      (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=batchSize)
-      self.trainingData = self.trainingData.prefetch(tf.data.experimental.AUTOTUNE)
-      self.testData = self.testData.prefetch(tf.data.experimental.AUTOTUNE)
-      
-      # Optimizer and loss
-      self.lossObject = tf.losses.BinaryCrossentropy(from_logits=False)
-      self.optimizer = tf.keras.optimizers.SGD(learning_rate, momentum=0.9)
+    # Get data from files
+    (self.trainingData, self.testData) = buildData(loadAmount=loadAmount,trainDataSize=trainDataSize,bachSize=batchSize)
+    self.trainingData = self.trainingData.prefetch(tf.data.experimental.AUTOTUNE)
+    self.testData = self.testData.prefetch(tf.data.experimental.AUTOTUNE)
+    
+    # Optimizer and loss
+    self.lossObject = binaryCrossentropyWithRegularization
+    self.lamdaReg = lamdaReg
+    self.optimizer = tf.keras.optimizers.Adam(learningRate)
     
     if resetNetwork:
       self.siameseNetwork = makeSiameseModel()
@@ -252,9 +258,8 @@ class SiameseNeuralNetwork:
       self.siameseNetwork.summary()
   
   def train(self, EPOCHS: int = 10) -> List[List[float]]:
-    if (not self.loadOurData):
-      print("Network must load data to train")
-      return [None]
+    if (not self.loadNewData):
+      print("Remember to check if you have loaded the data you want!")
     
     
     # Keep results for plotting
@@ -268,8 +273,8 @@ class SiameseNeuralNetwork:
       # training=training is needed only if there are layers with different
       # behavior during training versus inference (e.g. Dropout).
       predictions = self.siameseNetwork(images, training=training)
-      
-      return self.lossObject(y_true=labels, y_pred=predictions)
+      labels = tf.expand_dims(labels, axis=-1)
+      return self.lossObject(yTrue=labels, yPred=predictions, weights=self.siameseNetwork.trainable_variables, lambdaReg=self.lamdaReg)
     
     # gets the gradiants
     @tf.function # Compiles into a tensorflow graph
@@ -282,9 +287,9 @@ class SiameseNeuralNetwork:
         # Get label
         y = batch[2]
         
-        lossValue = loss(images=X,labels=y,training=True)
+        lossValue, crossEntropyLoss = loss(images=X,labels=y,training=True)
         
-      return lossValue, tape.gradient(lossValue, self.siameseNetwork.trainable_variables)
+      return tape.gradient(lossValue, self.siameseNetwork.trainable_variables), crossEntropyLoss
     
     # loop through epochs
     for epoch in range(EPOCHS):
@@ -293,17 +298,17 @@ class SiameseNeuralNetwork:
       epochAccuracy = tf.keras.metrics.BinaryAccuracy()
       testepochAccuracy = tf.keras.metrics.BinaryAccuracy()
       
-      print('\n Epoch {}/{}'.format(epoch+1,EPOCHS))
-      progbar = progBar(len(self.trainingData)+1)
-      
+      print('\033[3AEpoch {}/{}                                          ' .format(epoch+1,EPOCHS))
+      progbar = progBar(len(self.trainingData))
+      progbar.print(0)
       # Loop through each batch
       for idx, batch in enumerate(self.trainingData):
         # Run train step here
-        lossValue, grads = grad(batch)
+        grads, crossEntropyLoss = grad(batch)
         self.optimizer.apply_gradients(zip(grads, self.siameseNetwork.trainable_variables))
         
         # Track progress
-        epochLossAvg.update_state(lossValue)  # Add current batch loss
+        epochLossAvg.update_state(crossEntropyLoss)  # Add current batch loss
         # Compare predicted label to actual label
         # training=True is needed only if there are layers with different
         # behavior during training versus inference (e.g. Dropout).
@@ -313,7 +318,7 @@ class SiameseNeuralNetwork:
         # Update progbar
         currentLoss = epochLossAvg.result().numpy()
         currentAccuracy = epochAccuracy.result().numpy()
-        progbar.print(idx+1, suffix=f"Loss: {currentLoss:.3f}, Accuracy: {currentAccuracy:.3%}")
+        progbar.print(idx+1, suffix=f"crossEntropyLoss: {currentLoss:.3f}, Accuracy: {currentAccuracy:.3%}   ")
       
       for batch in self.testData:
         X = batch[:2]
@@ -329,7 +334,7 @@ class SiameseNeuralNetwork:
       testAccuracyResults.append(testepochAccuracy.result())
       
       if epoch % 1 == 0:
-        print("\nEpoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}, Test accuracy: {:.3%}".format(epoch,
+        print("\nEpoch {:03d}: crossEntropyLoss: {:.3f}, Accuracy: {:.3%}, Test accuracy: {:.3%}".format(epoch,
                                                                       epochLossAvg.result(),
                                                                       epochAccuracy.result(),
                                                                       testepochAccuracy.result()))
@@ -348,12 +353,12 @@ class SiameseNeuralNetwork:
     axes[1].legend()
     plt.show()
     self.siameseNetwork.save("siamesemodelBest" + self.person, save_format='tf')
-    return [trainLossResults,testAccuracyResults,trainAccuracyResults]
+    return trainLossResults,testAccuracyResults,trainAccuracyResults
   
   # Makes some predictions on some data and outputs how sure it was
   def makeAPredictionOnABatch(self):
-    if (not self.loadOurData):
-      return print("Network must load data to be able to predict")
+    if (not self.loadNewData):
+      print("Remember to check if you have loaded the data you want!")
     testInput, testVal, yTrue = self.testData.as_numpy_iterator().next()
     yHat = self.siameseNetwork.predict([testInput, testVal])
     # Post processing the results 

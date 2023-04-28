@@ -105,41 +105,17 @@ def modelAcc(label: str):
 def useSiameseNeuralNetwork():
     Network1 = SiameseNeuralNetwork(
     person = "Christoffer",
-    loadOurData  = False,
-    loadAmount = 1500,
-    varients = 3,
-    learning_rate = 1e-3,
-    trainDataSize = .9,
-    batchSize = 32,
-    reprocessDataset = False,
-    useDataset = True,
-    resetNetwork = False,
+    loadNewData  = False,
     networkSummary = True
     )
     Network2 = SiameseNeuralNetwork(
     person = "David",
-    loadOurData  = False,
-    loadAmount = 1500,
-    varients = 3,
-    learning_rate = 1e-3,
-    trainDataSize = .9,
-    batchSize = 32,
-    reprocessDataset = False,
-    useDataset = True,
-    resetNetwork = False,
+    loadNewData  = False,
     networkSummary = False
     )
     Network3 = SiameseNeuralNetwork(
     person = "Niels",
-    loadOurData  = False,
-    loadAmount = 1500,
-    varients = 3,
-    learning_rate = 1e-3,
-    trainDataSize = .9,
-    batchSize = 32,
-    reprocessDataset = False,
-    useDataset = True,
-    resetNetwork = False,
+    loadNewData  = False,
     networkSummary = False
     )
     camera = Camera(0)

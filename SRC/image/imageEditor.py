@@ -188,28 +188,41 @@ def gaussianKernel(img:List[List[List[np.uint8]]],size:Tuple[int], spread:float)
 def ProcessOther():
   clearPath('images\\modified\\Other')
   orgPath = "images\\modified\\forDataset"
+  
   selfPath = "images\\original\\Other"
+  
   cam = Camera(0)
   # Get all data
   img = []
   fail = 0
-  paths = os.listdir(orgPath)
-  paths = paths + os.listdir(selfPath)
+  paths1 = os.listdir(orgPath)
   time_start = time.time()
-  for i,picture in enumerate(paths):
+  for i, picture in enumerate(paths1):
     percent = ('{0:.2f}').format(100 * fail/(i+1))
-    printProgressBar(i, len(paths), time_start,suffix="failure rate: " + percent + "%   ")
+    printProgressBar(i, len(paths1), time_start, suffix = "failure rate: " + percent + "%   ")
     if ".jpg" in picture:
       path = os.path.join(orgPath, picture)
       temp = cam.processFace(np.array(Image.open(path)),False)
       if(type(temp) != type(None)):
         temp = Image.fromarray(temp)
         temp.resize((120,120))
-        temp.crop((10,10,110,110))
         img.append(makeVarients(np.array(temp),1)[0])
       else:
         fail += 1
   if(fail > 0):
     print(f"\nThere whas found {fail} pictures without a face in the dataset")
+  
+  print(f"\nGetting images from images\\original\\other")
+  paths2 = os.listdir(selfPath)
+  time_start = time.time()
+  for i, picture in enumerate(paths2):
+    printProgressBar(i, len(paths2), time_start)
+    if ".jpg" in picture:
+      path = os.path.join(selfPath, picture)
+      temp = np.array(Image.open(path))
+      temp = Image.fromarray(temp)
+      for i in makeVarients(np.array(temp),5):
+        img.append(i)
+  
   print("Saving images\r")
   saveImage(img,"Other",True)

@@ -12,7 +12,7 @@ def chooseModel() -> int:
     else:
         print("Please select a correct model")
         chooseModel()
-        
+
 def chooseDataSize():
     answer = input()
     if (answer.isdigit() and int(answer) > 0):

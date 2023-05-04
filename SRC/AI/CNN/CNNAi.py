@@ -33,7 +33,7 @@ def fitModelToData(model, trainingData, testData, epochs: int = 5):
     trainAccuracyResults = []
     testAccuracyResults = []
     
-    lossObject = tf.keras.losses.CategoricalCrossentropy(from_logits=True)
+    lossObject = tf.keras.losses.CategoricalCrossentropy(from_logits=False)
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
     
     # loss funktion

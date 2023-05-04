@@ -164,10 +164,10 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7, batchSize: int = 64
   otherImagePath = otherImagePath.take(loadAmount)
   
   # Adds label to imagepaths
-  chrisData = tf.data.Dataset.zip((chrisImagePath, tf.data.Dataset.from_tensor_slices(tf.convert_to_tensor([[1,0,0,0]]*len(chrisImagePath))))) 
-  davidData = tf.data.Dataset.zip((davidImagePath, tf.data.Dataset.from_tensor_slices(tf.convert_to_tensor([[0,1,0,0]]*len(davidImagePath))))) 
-  nielsData = tf.data.Dataset.zip((nielsImagePath, tf.data.Dataset.from_tensor_slices(tf.convert_to_tensor([[0,0,1,0]]*len(nielsImagePath)))))
-  otherData = tf.data.Dataset.zip((otherImagePath, tf.data.Dataset.from_tensor_slices(tf.convert_to_tensor([[0,0,0,1]]*len(otherImagePath)))))
+  chrisData = tf.data.Dataset.zip((chrisImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(chrisImagePath),0)))) 
+  davidData = tf.data.Dataset.zip((davidImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(davidImagePath),1)))) 
+  nielsData = tf.data.Dataset.zip((nielsImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(nielsImagePath),2))))
+  otherData = tf.data.Dataset.zip((otherImagePath, tf.data.Dataset.from_tensor_slices(tf.fill(len(otherImagePath),3))))
   
   # concatenates the data together
   chrisAndDavid = chrisData.concatenate(davidData)
@@ -177,7 +177,7 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7, batchSize: int = 64
   # Lodes the images
   data = data.map(preprocess)
   data = data.cache()
-  data = data.shuffle(buffer_size=5000)
+  data = data.shuffle(buffer_size=len(data))
   
   # Training partition
   trainData = data.take(round(len(data)*trainDataSize))

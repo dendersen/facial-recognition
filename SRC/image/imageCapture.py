@@ -32,7 +32,7 @@ class Camera:
     # get fram shape
     height, width, channel = frame.shape
     
-    # prdict face
+    # predict face
     face, probs = self.mtcnn.detect(frame)
     
     if type(face) != np.ndarray:

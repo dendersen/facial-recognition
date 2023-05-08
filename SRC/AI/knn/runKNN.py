@@ -13,16 +13,22 @@ from PIL import Image
 def makePoint(thing: Tuple[List[List[List[int]]],str]) -> Point:
   return Point([color for x in thing[0] for y in x for color in y],thing[1])
 
-def makePoints(things: List[Tuple[List[List[List[int]]],str]]):
+def makePoints(things: List[Tuple[List[List[List[int]]],str]], noLabel:bool = False):
   points:list[Point] = []
   print("preparing points")
   progbar = progBar(len(things))
   progbar.print(0)
   for i,thing in enumerate(things):
-    points.append(makePoint(thing))
+    if noLabel:
+      points.append(makeUnownPoint(thing))
+    else:
+      points.append(makePoint(thing))
     progbar.print(i+1)
   print("there are:",len(points),"produced points")
   return points
+
+def makeUnownPoint(thing:List[List[List[int]]]):
+  return Point([color for x in thing for y in x for color in y])
 
 def takeInput(msg:str)->int:
   while(True):

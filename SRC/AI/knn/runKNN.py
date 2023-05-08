@@ -122,7 +122,7 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
     print("\n\n\n")
     print("best k = ",k.testK(range(5,int(len(all)/6),2)))
 
-def runKNNtest(tests:list[list[list[list[int]]]], k = None, useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, distID:int = None, labels = None,threadCount:int = 1):
+def runKNNtest(tests:list[Point], k = None, useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, distID:int = None, labels = None,threadCount:int = 1):
   ori = useOriginals
   if(ori == None):
     ori = getYN("should original images be used")

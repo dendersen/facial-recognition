@@ -73,7 +73,7 @@ def pickDist() -> int:
       except Exception:
         pass
 
-def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, takePic:bool = True, distribution:float = 0.3,distID:int = None,threadCount:int = 1):
+def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, takePic:bool = True, distribution:float = 0.3,distID:int = None, threadCount:int = 1):
   ori = useOriginals
   if(ori == None):
     ori = getYN("should original images be used")
@@ -121,3 +121,52 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
     k.UpdateDataset(unkown,[i.label for i in unkown])
     print("\n\n\n")
     print("best k = ",k.testK(range(5,int(len(all)/6),2)))
+
+def runKNNtest(tests:list[list[list[list[int]]]], k = None, useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, distID:int = None, labels = None,threadCount:int = 1):
+  ori = useOriginals
+  if(ori == None):
+    ori = getYN("should original images be used")
+  
+  mod = useModified
+  
+  if(not ori):
+    mod = True
+  elif(type(useModified) == type(None)):
+    mod = getYN("should modified images be used")
+  
+  if(mod and ((type(makeModified) == type(None) and getYN("should new modified images be made?")) or makeModified)):
+    modifyOriginals()
+  
+  if(perLabel == None):
+    perLabel:int = takeInput("the number of images to be loaded: ")
+  
+  all = IL.loadImgAsArr(perLabel,False,alowModified=mod,alowOriginals=ori,cropOri=True)
+  if(equal or equal == None):
+    if((perLabel*8 != len(all) and ori and mod) or (perLabel*4 != len(all) and (ori ^ mod))):
+      if(equal or getYN("do you want equal number of all labels?") == "Y"):
+        while((perLabel*8 != len(all) and ori and mod) or (perLabel*4 != len(all) and (ori ^ mod))):
+          perLabel -= 1
+          all = IL.loadImgAsArr(perLabel,False,alowModified=True)
+  
+  all = makePoints(all)
+  print("final number of images per label:", len(all)/4 if (ori ^ mod) else len(all)/8)
+  
+  if(labels == None):
+    labels = getValidLabel("who is this dataset of")
+  
+  KNN:Knn = None
+  
+  if(getYN("use specific K? ")):
+    KNN = Knn(all,k if type(k) != type(None) else takeInput("what k do you wish to use? "),distID,threadCount)
+    KNN.UpdateDataset(tests,labels)
+    e = KNN.runData(getLabel = True)
+    return e
+  else:
+    KNN = KNN(all,1,distID,threadCount)
+    KNN.UpdateDataset(tests,labels)
+    if(getYN("should all answers be returned or only the best")):
+      e = KNN.testK(range(1,11,2),True)
+    else:
+      e = KNN.testK(range(1,11,2))
+    return e
+  

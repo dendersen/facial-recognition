@@ -65,7 +65,7 @@ class Knn:
     progbar.incriment(suffix="      \n")
     print("")
     if(getLabel):
-      soll = zip(zip(self.referencePoints[::-1],self.solution))[0]
+      soll = [*zip(*zip(self.referencePoints[::-1],self.solution))][0]
       result = []
       for i in soll:
         if i.label == "Christoffer":
@@ -123,7 +123,7 @@ class Knn:
       print("\nguess =",self.referencePoints[::-1][0].label, ", correct =",self.solution[::-1][0])
       print(msg)
     elif (Print):
-      print ("current K: ",self.k, "|" ,((len(self.solution) - e) / len(self.solution))*100,"percent correct\n")
+      print ("\ncurrent K: ",self.k, "|" ,((len(self.solution) - e) / len(self.solution))*100,"percent correct\n")
     if(percent):
       return e / len(self.solution)*100
     return e
@@ -132,7 +132,7 @@ class Knn:
     if rangeOfK == -1 :#sets a default range of k
       rangeOfK = range(1,8,2)
     allE = []
-    e = 2e10
+    e = [2e10,0]
     for i in rangeOfK:
       temp = self.buildInternalKNN(i,self.distanceCalcID)
       e = temp if temp[0] < e[0] else e

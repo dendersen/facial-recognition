@@ -165,14 +165,17 @@ def runKNNtest(tests:list[Point], k = None, useOriginals:bool = None, useModifie
   if(getYN("use specific K? ")):
     KNN = Knn(all,k if type(k) != type(None) else takeInput("what k do you wish to use? "),distID,threadCount)
     KNN.UpdateDataset(tests,labels)
+    print("\n\n\n\n")
     e = KNN.runData(getLabel = True)
     return e
   else:
-    KNN = KNN(all,1,distID,threadCount)
+    KNN = Knn(all,1,distID,threadCount)
     KNN.UpdateDataset(tests,labels)
     if(getYN("should all answers be returned or only the best")):
-      e = KNN.testK(range(1,11,2),True)
+      print("\n\n\n\n")
+      e = KNN.testK(range(1,31,2),True)
     else:
-      e = KNN.testK(range(1,11,2))
+      print("\n\n\n\n")
+      e = KNN.testK(range(1,31,2))
     return e
   

@@ -13,16 +13,22 @@ from PIL import Image
 def makePoint(thing: Tuple[List[List[List[int]]],str]) -> Point:
   return Point([color for x in thing[0] for y in x for color in y],thing[1])
 
-def makePoints(things: List[Tuple[List[List[List[int]]],str]]):
+def makePoints(things: List[Tuple[List[List[List[int]]],str]], noLabel:bool = False):
   points:list[Point] = []
   print("preparing points")
   progbar = progBar(len(things))
   progbar.print(0)
   for i,thing in enumerate(things):
-    points.append(makePoint(thing))
+    if noLabel:
+      points.append(makeUnownPoint(thing))
+    else:
+      points.append(makePoint(thing))
     progbar.print(i+1)
   print("there are:",len(points),"produced points")
   return points
+
+def makeUnownPoint(thing:List[List[List[int]]]):
+  return Point([color for x in thing for y in x for color in y])
 
 def takeInput(msg:str)->int:
   while(True):
@@ -122,7 +128,7 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
     print("\n\n\n")
     print("best k = ",k.testK(range(5,int(len(all)/6),2)))
 
-def runKNNtest(tests:list[list[list[list[int]]]], k = None, useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, distID:int = None, labels = None,threadCount:int = 1):
+def runKNNtest(tests:list[Point], k = None, useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, distID:int = None, labels = None,threadCount:int = 1):
   ori = useOriginals
   if(ori == None):
     ori = getYN("should original images be used")

@@ -41,7 +41,7 @@ class Knn:
   def distance(self,item0:Point,item1:Point) -> int:
     return item0.distance(self.distanceCalcID,item1)#calls the distance method contained in the class point
   
-  def runData(self) -> None:#runs the algorithm through all unkown points
+  def runData(self, Return=False, getLabel = False) -> None:#runs the algorithm through all unkown points
     print("\033[7A")
     progbar = progBar(len(self.data),prefix="\033[Aall calculations:")
     print("\n")
@@ -64,8 +64,25 @@ class Knn:
       self.referencePoints.append(toBeTested)
     progbar.incriment(suffix="      \n")
     print("")
+    if(getLabel):
+      soll = zip(zip(self.referencePoints[::-1],self.solution))[0]
+      result = []
+      for i in soll:
+        if i.label == "Christoffer":
+          result.append(1)
+        elif i.label == "David":
+          result.append(2)
+        elif i.label == "Niels":
+          result.append(3)
+        elif i.label == "Other":
+          result.append(4)
+        else:
+          result.append(i.label)
+      return result
     if(len(self.solution) == 1):
       return self.referencePoints[-1].label
+    if(Return):
+      return self.errorRate(Print=False)
     return
   
   def findIndividualLabels(self, labels:List[str]) -> List[str]:
@@ -97,7 +114,7 @@ class Knn:
     
     return distances
   
-  def errorRate(self,msg:str = "")->int:#counts the number of True in error array
+  def errorRate(self,msg:str = "",Print = True, percent = False)->int:#counts the number of True in error array
     e=0
     for i,j in zip(self.referencePoints[::-1],self.solution[::-1]):
       if i.label != j:
@@ -105,19 +122,25 @@ class Knn:
     if(len(self.solution) == 1):
       print("\nguess =",self.referencePoints[::-1][0].label, ", correct =",self.solution[::-1][0])
       print(msg)
-    else:
+    elif (Print):
       print ("current K: ",self.k, "|" ,((len(self.solution) - e) / len(self.solution))*100,"percent correct\n")
+    if(percent):
+      return e / len(self.solution)*100
     return e
   
-  def testK(self,rangeOfK: range = -1) -> List[Point]:#test's for different k's on the current ori(original know points) and currently active dataset 
+  def testK(self,rangeOfK: range = -1, getAllE = False) -> List[Point]:#test's for different k's on the current ori(original know points) and currently active dataset 
     if rangeOfK == -1 :#sets a default range of k
       rangeOfK = range(1,8,2)
+    allE = []
     e = 2e10
     for i in rangeOfK:
       temp = self.buildInternalKNN(i,self.distanceCalcID)
       e = temp if temp[0] < e[0] else e
+      allE.append (temp)
     print("\n\n")
-    return e[1]
+    if(getAllE):
+      return allE
+    return e
   
   def buildInternalKNN(self, k, dist):
       k_nn = Knn([*self.ori.copy()],k,dist,self.threads)#creates a new knn algorithm with a new k and dist

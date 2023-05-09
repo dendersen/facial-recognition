@@ -9,6 +9,8 @@ from matplotlib import pyplot as plt
 import math
 import cv2 as cv
 
+from SRC.progBar import progBar
+
 def showBatch(batch):
     classNames = ["Chris","David","Niels","Other"]
     images = batch[0]
@@ -28,18 +30,17 @@ def showBatch(batch):
 def fitModelToData(model, trainingData, testData, epochs: int = 5):
     history = model.fit(
         trainingData,
-        validation_data=testData,
-        epochs=epochs
+        validation_data = testData,
+        epochs = epochs
     )
+
     acc = history.history['accuracy']
     val_acc = history.history['val_accuracy']
     loss = history.history['loss']
-    val_loss = history.history['val_loss']
     epochs_range = range(epochs)
-    
-    return acc,val_acc,loss,val_loss,epochs_range
+    return acc, val_acc, loss, epochs_range
 
-def showResults(acc,val_acc,loss,val_loss,epochs_range):
+def showResults(acc,val_acc,loss,epochs_range):
     plt.figure(figsize=(8, 8))
     plt.subplot(1, 2, 1)
     plt.plot(epochs_range, acc, label='Training Accuracy')
@@ -49,7 +50,6 @@ def showResults(acc,val_acc,loss,val_loss,epochs_range):
     
     plt.subplot(1, 2, 2)
     plt.plot(epochs_range, loss, label='Training Loss')
-    plt.plot(epochs_range, val_loss, label='Validation Loss')
     plt.legend(loc='upper right')
     plt.title('Training and Validation Loss')
     plt.show()
@@ -84,16 +84,18 @@ def makeModel(loadAmount: int, trainDataSize:float = .7, epochs: int = 15):
     dropout2 = Dropout(rate=.7)(dense2)
     
     # Output
-    dense3 = Dense(4, activation='sigmoid')(dropout2)
+    dense3 = Dense(4)(dropout2)
     
-    model = tf.keras.Model(inputs=[input_image], outputs=[dense3], name='CNN')
-    model.compile(optimizer=tf.keras.optimizers.Adam(1e-4), 
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
-                metrics=['accuracy'])
+    model = tf.keras.Model(inputs=[input_image], outputs=dense3, name='CNN')
+    
+    model.compile(optimizer='adam',
+                    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                    metrics=['accuracy'])
+    
     model.summary()
     
-    acc,val_acc,loss,val_loss,epochs_range = fitModelToData(model, trainingData,testData,epochs=epochs)
+    acc,val_acc,loss,epochs_range = fitModelToData(model, trainingData, testData, epochs=epochs)
     
-    showResults(acc,val_acc,loss,val_loss,epochs_range)
+    showResults(acc,val_acc,loss,epochs_range)
     
     model.save("CNNAi", save_format='tf')

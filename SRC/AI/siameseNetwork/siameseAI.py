@@ -32,11 +32,11 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
   if reprocessDataset:
     getLabeledFaces()
   
-  # Get all negative data
+  # Get all modified negative data
   for name in ["Christoffer","Niels","David","Other"]:
     if name != person:
-      print('\n Adding images to: '+ negPath +' : from: images\modified\\' + name)
-      progbar = progBar(len(os.listdir('images\modified\\' + name))-1)
+      print('\n Adding images to: '+ negPath +' : from: images\\modified\\' + name)
+      progbar = progBar(len(os.listdir('images\\modified\\' + name))-1)
       for i,picture in enumerate(os.listdir('images\\modified\\' + name)):
         if ".jpg" in picture:
           path = os.path.join('images\modified', name, picture)
@@ -45,13 +45,41 @@ def rewriteDataToMatchNetwork(person: str, reprocessDataset: bool = False):
           cv.imwrite(newPath, img)
           progbar.print(i+1)
   
+  # Get all original negative data
+  for name in ["Christoffer","Niels","David","Other"]:
+    if name != person:
+      print('\n Adding images to: '+ negPath +' : from: images\\original\\' + name)
+      progbar = progBar(len(os.listdir('images\\original\\' + name))-1)
+      for i,picture in enumerate(os.listdir('images\\original\\' + name)):
+        if ".jpg" in picture:
+          path = os.path.join('images\original', name, picture)
+          img = cv.imread(path)
+          newPath = os.path.join(negPath, name + "_" + picture)
+          cv.imwrite(newPath, img)
+          progbar.print(i+1)
   
-  # Get all anchor data and positive data
+  # Add all modified anchor data and positive data
   datapath = os.path.join('images/modified/', person)
   
   print('\n Adding images to: '+ posPath +' and '+ ancPath +' : from: '+ datapath)
   progbar = progBar(len(os.listdir(datapath)))
   for i,picture in enumerate(os.listdir(datapath)):
+    if ".jpg" in picture:
+      path = os.path.join(datapath, picture)
+      newPath = os.path.join(ancPath, picture)
+      if i % 2 == 0:
+        img = cv.imread(path)
+      else:
+        newPath = os.path.join(posPath, picture)
+      cv.imwrite(newPath, img)
+    progbar.print(i+1)
+  
+  # Add all original anchor data and positive data
+  datapath = os.path.join('images/original/', person)
+  
+  print('\n Adding images to: '+ posPath +' and '+ ancPath +' : from: '+ datapath)
+  progbar = progBar(len(os.listdir(datapath)))
+  for i, picture in enumerate(os.listdir(datapath)):
     if ".jpg" in picture:
       path = os.path.join(datapath, picture)
       newPath = os.path.join(ancPath, picture)
@@ -86,15 +114,9 @@ def buildData(loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int =
   ancPath = os.path.join('images\DataSiameseNetwork','anchor')
   
   # load data
-  anchor = tf.data.Dataset.list_files(ancPath+'\*.jpg').take(loadAmount)
-  positive = tf.data.Dataset.list_files(posPath+'\*.jpg').take(loadAmount)
-  negative = tf.data.Dataset.list_files(negPath+'\*.jpg').take(len(os.listdir(negPath))-1)
-  
-  # prep negative
-  negative = negative.shuffle(buffer_size=int(len(os.listdir(negPath))/2-1))
-  negative = negative.shuffle(buffer_size=len(os.listdir(negPath))-1)
-  negative = negative.take(loadAmount)
-  
+  anchor = tf.data.Dataset.list_files(ancPath+'\*.jpg', shuffle=True).take(loadAmount)
+  positive = tf.data.Dataset.list_files(posPath+'\*.jpg', shuffle=True).take(loadAmount)
+  negative = tf.data.Dataset.list_files(negPath+'\*.jpg', shuffle=True).take(loadAmount)
   
   # build a dataset of our data
   positives = tf.data.Dataset.zip((anchor,positive, tf.data.Dataset.from_tensor_slices(tf.ones(len(anchor)))))
@@ -104,7 +126,7 @@ def buildData(loadAmount: int = 300, trainDataSize: float = 0.7, bachSize: int =
   # Build dataloader pipline
   data = data.map(preprocessTwin)
   data = data.cache()
-  data = data.shuffle(buffer_size=5000)
+  data = data.shuffle(buffer_size=len(data))
   
   # Training partition
   trainData = data.take(round(len(data)*trainDataSize))

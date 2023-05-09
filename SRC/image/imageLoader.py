@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 import os
 import tensorflow as tf
+import numpy as np
 
 from SRC.image.imageCapture import Camera
 from SRC.image.imageSaver import saveImage
@@ -131,7 +132,7 @@ def preprocess(filePath,label):
   img = img/255.0
   return (img,label)
 
-def loadDataset(loadAmount: int, trainDataSize: float = 0.7, bachSize: int = 16):
+def loadDataset(loadAmount: int, trainDataSize: float = 0.7, batchSize: int = 64):
   """
   Lodes a set amount of the dataset. 
   splits the dataset into traning data and test data
@@ -176,19 +177,18 @@ def loadDataset(loadAmount: int, trainDataSize: float = 0.7, bachSize: int = 16)
   # Lodes the images
   data = data.map(preprocess)
   data = data.cache()
-  data = data.shuffle(buffer_size=5000)
+  data = data.shuffle(buffer_size=len(data))
   
   # Training partition
   trainData = data.take(round(len(data)*trainDataSize))
-  trainData = trainData.batch(bachSize)
+  trainData = trainData.batch(batchSize)
   trainData = trainData.prefetch(8)
   
   # Testing partition
   testData = data.skip(round(len(data)*trainDataSize))
   # testData = testData.take(round(len(data)*(1-trainDataSize)))
-  testData = testData.batch(bachSize)
+  testData = testData.batch(batchSize)
   testData = testData.prefetch(8)
   return (trainData, testData)
-
 
 

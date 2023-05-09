@@ -107,7 +107,7 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
           all = IL.loadImgAsArr(perLabel,False,alowModified=True)
   
   print("final number of images per label:", (len(all)/4) if (ori ^ mod) else (len(all)/8))
-  if((not equal or equal == None) and perLabel != orgLabel and (not getYN("do you still wish to run with this number of labels?,\nIF NOT THIS WILL EXIT THIS WILL EXIT THE PROGRAM\n"))):
+  if((not equal or equal == None) and perLabel != orgLabel and (not getYN("do you still wish to run with this number of labels?\nIF NOT THIS WILL EXIT THIS WILL EXIT THE PROGRAM\n"))):
     if(getYN("are you sure? ")):
       if(getYN("do you wish to exit, if not it will only end KNN")):
         exit()
@@ -133,7 +133,7 @@ def runKNN(useOriginals:bool = None, useModified:bool = None, makeModified = Fal
     
     k = Knn(known,distID=distID,threads=threadCount)
     k.UpdateDataset(unkown,[i.label for i in unkown])
-    print("\n\n\n")
+    print("\n\n\n\n")
     print("best k = ",k.testK(range(5,int(len(all)/6),2)))
 
 def runKNNtest(tests:List[Point], k = None, useOriginals:bool = None, useModified:bool = None, makeModified = False, perLabel:int = None, equal:bool = None, distID:int = None, labels = None,threadCount:int = 1):
